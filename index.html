@@ -352,7 +352,7 @@ function createOrder(){
   const totalCost = productCost + commission + techCost + otherCost;
   const profit = revenue - totalCost;
   p.stock -= qty;
-  db.orders.unshift({date:today(), customer:c.name, customerType:c.type, product:p.name, qty, gross, discount, revenue, productCost, commission, techCost, otherCost, totalCost, profit, staff:st?st.name:currentUser.name});
+  db.orders.unshift({date:today(), customer:c.name, customerType:c.type, product:p.name, qty, gross, discount, revenue, productCost, commission, techCost, otherCost, totalCost, profit, staff:st?st.name:'Không chỉ định'});
   save();
 }
 function stockMove(){
@@ -408,7 +408,7 @@ function topStaff(){
   return Object.entries(staff).map(([k,v])=>`<tr><td>${k}</td><td>${v.count}</td><td>${money(v.revenue)}</td><td>${can('profit')?money(v.profit):money(v.commission)}</td></tr>`).join('');
 }
 function renderCustomers(){
-  document.getElementById('customerTable').innerHTML = db.customers.map((c,i)=>`<tr><td>${c.code}</td><td>${c.name}</td><td>${c.type}</td><td>${c.phone}</td><td>${c.address}</td><td>${c.discount}%</td><td>${can('delete')?`<button onclick="del('customers',${i})">X</button>`:''}</td></tr>`).join('');
+  document.getElementById('customerTable').innerHTML = db.customers.map((c,i)=>`<tr><td>${c.code}</td><td>${c.name}</td><td>${c.type}</td><td>${c.phone}</td><td>${c.address}</td><td>${c.discount}%</td><td>${can('delete')?`<button class="danger" onclick="del('customers',${i})">Xóa</button>`:''}</td></tr>`).join('');
 }
 function renderProducts(){
   const productForm = document.getElementById('productForm');
@@ -418,7 +418,7 @@ function renderProducts(){
     productForm.innerHTML = `
       <div class="grid">
         <div><label>Mã SP</label><input id="pCode"></div><div><label>Tên sản phẩm</label><input id="pName"></div>
-        <div><label>Danh mục</label><select id="pCategory"><option>Khóa cửa nhôm</option><option>Khóa cửa gỗ/composite</option><option>Khóa cổng/cửa sắt</option><option>Phụ kiện</option><option>Dịch vụ</option></select></div>
+        <div><label>Danh mục</label><select id="pCategory"><option>Khóa cửa nhôm</option><option>Khóa cửa gỗ/composite</option><option>Khóa cổng/cửa sắt</option><option>Phụ kiện</option></select></div>
         <div><label>Giá vốn</label><input type="number" id="pCost"></div><div><label>Giá bán</label><input type="number" id="pPrice"></div><div><label>Tồn kho</label><input type="number" id="pStock"></div>
       </div><button class="primary" onclick="addProduct()">LƯU SẢN PHẨM</button>
       <div class="import-box"><b>Import sản phẩm CSV</b><div class="small">Cột: code,name,category,cost,price,stock</div><input type="file" accept=".csv" onchange="importCSV(event,'products')"></div>
@@ -427,15 +427,15 @@ function renderProducts(){
     productForm.innerHTML = `<div class="no-access">Vai trò hiện tại chỉ xem được sản phẩm, giá bán và tồn kho. Giá vốn đã được ẩn.</div>`;
   }
   productTable.innerHTML = `<thead><tr><th>Mã</th><th>Tên</th><th>Danh mục</th><th>Giá vốn</th><th>Giá bán</th><th>Tồn</th><th>Xóa</th></tr></thead><tbody>` + 
-    db.products.map((p,i)=>`<tr><td>${p.code}</td><td>${p.name}</td><td>${p.category}</td><td>${can('cost')?money(p.cost):hideMoney()}</td><td>${money(p.price)}</td><td>${p.stock}</td><td>${can('delete')?`<button onclick="del('products',${i})">X</button>`:''}</td></tr>`).join('') + `</tbody>`;
+    db.products.map((p,i)=>`<tr><td>${p.code}</td><td>${p.name}</td><td>${p.category}</td><td>${can('cost')?money(p.cost):hideMoney()}</td><td>${money(p.price)}</td><td>${p.stock}</td><td>${can('delete')?`<button class="danger" onclick="del('products',${i})">Xóa</button>`:''}</td></tr>`).join('')+'</tbody>';
 }
 function renderSales(){
   document.getElementById('orderHead').innerHTML = can('profit')
-    ? `<tr><th>Ngày</th><th>Khách</th><th>Loại</th><th>Sản phẩm</th><th>SL</th><th>Doanh thu</th><th>Giá vốn</th><th>Hoa hồng</th><th>Chi phí</th><th>Lợi nhuận</th><th>NV</th></tr>`
+    ? `<tr><th>Ngày</th><th>Khách</th><th>Loại</th><th>Sản phẩm</th><th>SL</th><th>Doanh thu</th><th>Giá vốn</th><th>Hoa hồng</th><th>Chi phí</th><th>Lợi nhuận</th><th>NV</th><th></th></tr>`
     : `<tr><th>Ngày</th><th>Khách</th><th>Loại</th><th>Sản phẩm</th><th>SL</th><th>Doanh thu</th><th>Hoa hồng</th><th>NV</th></tr>`;
-  document.getElementById('orderTable').innerHTML = db.orders.map(o=>{
+  document.getElementById('orderTable').innerHTML = db.orders.map((o,i)=>{
     if(can('profit')){
-      return `<tr><td>${o.date}</td><td>${o.customer}</td><td>${o.customerType}</td><td>${o.product}</td><td>${o.qty}</td><td>${money(o.revenue)}</td><td>${money(o.productCost)}</td><td>${money(o.commission)}</td><td>${money(o.totalCost)}</td><td class="${o.profit>=0?'profit':'loss'}">${money(o.profit)}</td><td>${o.staff}</td></tr>`;
+      return `<tr><td>${o.date}</td><td>${o.customer}</td><td>${o.customerType}</td><td>${o.product}</td><td>${o.qty}</td><td>${money(o.revenue)}</td><td>${money(o.productCost)}</td><td>${money(o.commission)}</td><td>${money(o.techCost+o.otherCost)}</td><td class="${o.profit>=0?'profit':'loss'}">${money(o.profit)}</td><td>${o.staff}</td><td>${can('delete')?`<button class="danger" onclick="del('orders',${i})">Xóa</button>`:''}</td></tr>`;
     }
     return `<tr><td>${o.date}</td><td>${o.customer}</td><td>${o.customerType}</td><td>${o.product}</td><td>${o.qty}</td><td>${money(o.revenue)}</td><td>${money(o.commission)}</td><td>${o.staff}</td></tr>`;
   }).join('');
@@ -444,15 +444,15 @@ function renderInventory(){
   document.getElementById('stockTable').innerHTML = db.products.map(p=>`<tr><td>${p.code}</td><td>${p.name}</td><td>${p.stock}</td></tr>`).join('');
 }
 function renderStaff(){
-  document.getElementById('staffTable').innerHTML = db.staff.map((e,i)=>`<tr><td>${e.code}</td><td>${e.name}</td><td>${e.dept}</td><td>${e.phone}</td><td>${can('delete')?`<button onclick="del('staff',${i})">X</button>`:''}</td></tr>`).join('');
+  document.getElementById('staffTable').innerHTML = db.staff.map((e,i)=>`<tr><td>${e.code}</td><td>${e.name}</td><td>${e.dept}</td><td>${e.phone}</td><td>${can('delete')?`<button class="danger" onclick="del('staff',${i})">Xóa</button>`:''}</td></tr>`).join('');
 }
 function renderExpenses(){
   if(!can('expenses')) return;
-  document.getElementById('expenseTable').innerHTML = db.expenses.map((x,i)=>`<tr><td>${x.date}</td><td>${x.name}</td><td>${x.type}</td><td>${can('profit')?money(x.amount):hideMoney()}</td><td>${x.note}</td><td>${can('delete')?`<button onclick="del('expenses',${i})">X</button>`:''}</td></tr>`).join('');
+  document.getElementById('expenseTable').innerHTML = db.expenses.map((x,i)=>`<tr><td>${x.date}</td><td>${x.name}</td><td>${x.type}</td><td>${can('profit')?money(x.amount):hideMoney()}</td><td>${x.note}</td><td>${can('delete')?`<button class="danger" onclick="del('expenses',${i})">Xóa</button>`:''}</td></tr>`).join('');
 }
 function renderUsers(){
   if(!can('users')) return;
-  document.getElementById('userTable').innerHTML = db.users.map((u,i)=>`<tr><td>${u.username}</td><td>${u.name}</td><td>${roleNames[u.role]}</td><td>${(permissions[u.role]||[]).join(', ')}</td><td>${u.username==='admin'?'Không xóa':`<button onclick="del('users',${i})">X</button>`}</td></tr>`).join('');
+  document.getElementById('userTable').innerHTML = db.users.map((u,i)=>`<tr><td>${u.username}</td><td>${u.name}</td><td>${roleNames[u.role]}</td><td>${(permissions[u.role]||[]).join(', ')}</td><td>${can('delete')?`<button class="danger" onclick="del('users',${i})">Xóa</button>`:''}</td></tr>`).join('');
 }
 function fillSelects(){
   ['sCustomer','sProduct','iProduct','sStaff'].forEach(id=>{ if(!document.getElementById(id)) return; });
@@ -498,7 +498,7 @@ function downloadCSV(type){
   const csv=[headers.join(','), ...exportArr.map(o=>headers.map(h=>`"${String(o[h]??'').replaceAll('"','""')}"`).join(','))].join('\n');
   download(type+'.csv', csv, 'text/csv;charset=utf-8');
 }
-function resetAll(){ if(!can('users')) return alert('Chỉ Admin được xóa toàn bộ'); if(confirm('Xóa toàn bộ dữ liệu ERP?')){ localStorage.removeItem('similockERPAuth'); sessionStorage.removeItem('similockCurrentUser'); location.reload(); } }
+function resetAll(){ if(!can('users')) return alert('Chỉ Admin được xóa toàn bộ'); if(confirm('Xóa toàn bộ dữ liệu ERP?')){ localStorage.removeItem('similockERPAuth'); sessionStorage.removeItem('similockCurrentUser'); location.reload(); }}
 
 if(currentUser) openApp();
 </script>
