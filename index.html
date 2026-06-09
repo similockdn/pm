@@ -11,8 +11,14 @@
     header h1 { margin:0; font-size:23px; }
     header div { opacity:.95; }
     .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#005fae,#00a2ff); padding:20px; }
-    .login-box { width:100%; max-width:430px; background:white; padding:28px; border-radius:20px; box-shadow:0 10px 35px rgba(0,0,0,.22); }
+    .login-container { display:flex; gap:40px; width:100%; max-width:1000px; align-items:center; }
+    .login-box { flex:1; max-width:430px; background:white; padding:28px; border-radius:20px; box-shadow:0 10px 35px rgba(0,0,0,.22); }
     .login-box h1 { color:#005fae; text-align:center; margin-top:0; }
+    .login-info { flex:1; color:white; }
+    .login-info h2 { font-size:28px; margin-top:0; margin-bottom:20px; }
+    .login-info-box { background:rgba(255,255,255,.15); padding:20px; border-radius:15px; margin-bottom:15px; border-left:5px solid white; }
+    .login-info-box b { display:block; font-size:16px; margin-bottom:5px; }
+    .login-info-box .detail { font-size:14px; opacity:.9; line-height:1.6; }
     .layout { display:grid; grid-template-columns:230px 1fr; min-height:calc(100vh - 78px); }
     nav { background:#0b3d66; padding:14px; color:white; }
     nav button { width:100%; display:block; margin:7px 0; padding:12px; border:0; border-radius:10px; background:#145c91; color:white; font-weight:bold; cursor:pointer; text-align:left; }
@@ -42,6 +48,10 @@
     .no-access { padding:18px; background:#fff1f1; color:#b00020; border-radius:12px; font-weight:bold; }
     .top-user { text-align:right; font-size:14px; }
     .hidden-cost { color:#777; font-style:italic; }
+    @media(max-width:1200px){
+      .login-container { flex-direction:column; gap:20px; }
+      .login-info { order:-1; }
+    }
     @media(max-width:900px){
       header { display:block; }
       .layout { grid-template-columns:1fr; }
@@ -55,18 +65,39 @@
 <body>
 
 <div id="loginPage" class="login-page">
-  <div class="login-box">
-    <h1>🔐 Đăng nhập Mini ERP Similock</h1>
-    <label>Tài khoản</label>
-    <input id="loginUser" placeholder="admin / sale1 / kt1">
-    <label>Mật khẩu</label>
-    <input id="loginPass" type="password" placeholder="123456">
-    <button class="primary" style="width:100%;" onclick="login()">ĐĂNG NHẬP</button>
-    <div class="small" style="margin-top:15px;line-height:1.7">
-      Tài khoản mẫu:<br>
-      <b>admin / 123456</b> - Toàn quyền<br>
-      <b>sale1 / 123456</b> - Nhân viên sale, không xem giá vốn/lợi nhuận<br>
-      <b>kt1 / 123456</b> - Kỹ thuật, chỉ xem đơn lắp đặt
+  <div class="login-container">
+    <div class="login-info">
+      <h2>🚀 MINI ERP SIMILOCK</h2>
+      <div class="login-info-box">
+        <b>🔐 Tài khoản: admin</b>
+        <div class="detail">
+          Mật khẩu: <b>123456</b><br>
+          Quyền: Toàn quyền - Xem tất cả dữ liệu
+        </div>
+      </div>
+      <div class="login-info-box">
+        <b>💼 Tài khoản: sale1</b>
+        <div class="detail">
+          Mật khẩu: <b>123456</b><br>
+          Quyền: Nhân viên Sale - Không xem giá vốn/lợi nhuận
+        </div>
+      </div>
+      <div class="login-info-box">
+        <b>🔧 Tài khoản: kt1</b>
+        <div class="detail">
+          Mật khẩu: <b>123456</b><br>
+          Quyền: Kỹ thuật - Chỉ xem đơn lắp đặt & kho
+        </div>
+      </div>
+    </div>
+
+    <div class="login-box">
+      <h1>🔐 Đăng nhập</h1>
+      <label>Tài khoản</label>
+      <input id="loginUser" placeholder="admin / sale1 / kt1" autofocus>
+      <label>Mật khẩu</label>
+      <input id="loginPass" type="password" placeholder="123456">
+      <button class="primary" style="width:100%;" onclick="login()">ĐĂNG NHẬP</button>
     </div>
   </div>
 </div>
