@@ -1,608 +1,403 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mini ERP Similock - Phân quyền</title>
-  <style>
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Arial,sans-serif; background:#f3f8ff; color:#123; }
-    header { background:#005fae; color:white; padding:16px 20px; display:flex; justify-content:space-between; align-items:center; gap:15px; }
-    header h1 { margin:0; font-size:23px; }
-    header div { opacity:.95; }
-    .login-page { min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#005fae,#00a2ff); padding:20px; }
-    .login-container { display:flex; gap:40px; width:100%; max-width:1000px; align-items:center; }
-    .login-box { flex:0 0 380px; background:white; padding:28px; border-radius:20px; box-shadow:0 10px 35px rgba(0,0,0,.22); }
-    .login-box h1 { color:#005fae; text-align:center; margin-top:0; font-size:20px; }
-    .login-info { flex:1; color:white; }
-    .login-info h2 { font-size:32px; margin-top:0; margin-bottom:10px; font-weight:bold; }
-    .login-info-desc { font-size:16px; line-height:1.6; opacity:0.95; }
-    .layout { display:grid; grid-template-columns:230px 1fr; min-height:calc(100vh - 78px); }
-    nav { background:#0b3d66; padding:14px; color:white; }
-    nav button { width:100%; display:block; margin:7px 0; padding:12px; border:0; border-radius:10px; background:#145c91; color:white; font-weight:bold; cursor:pointer; text-align:left; }
-    nav button.active, nav button:hover { background:#00a2ff; }
-    nav button.hidden { display:none; }
-    main { padding:20px; overflow-y:auto; }
-    section { display:none; background:white; padding:20px; border-radius:18px; box-shadow:0 8px 25px rgba(0,0,0,.09); margin-bottom:20px; }
-    section.active { display:block; }
-    h2 { margin-top:0; color:#005fae; }
-    h3 { color:#005fae; margin-top:20px; }
-    .grid { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
-    label { font-weight:bold; display:block; margin-bottom:5px; }
-    input, select, textarea { width:100%; padding:11px; border:1px solid #c9dff2; border-radius:10px; font-size:14px; }
-    input[type="search"] { background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Ccircle cx='6.5' cy='6.5' r='5' fill='none' stroke='%23999' stroke-width='1'/%3E%3Cline x1='10' y1='10' x2='14' y2='14' stroke='%23999' stroke-width='1'/%3E%3C/svg%3E") no-repeat 10px center; padding-left:35px; }
-    button.primary { background:#0077cc; color:white; border:0; border-radius:10px; padding:12px 18px; font-weight:bold; cursor:pointer; margin-top:12px; }
-    button.primary:hover { background:#0056a6; }
-    button.danger { background:#d00000; color:white; border:0; border-radius:10px; padding:10px 14px; font-weight:bold; cursor:pointer; }
-    button.danger:hover { background:#a00000; }
-    button.gray { background:#eee; color:#123; border:0; border-radius:10px; padding:10px 14px; font-weight:bold; cursor:pointer; }
-    button.edit { background:#ff9800; color:white; border:0; border-radius:10px; padding:8px 12px; font-weight:bold; cursor:pointer; font-size:12px; }
-    button.edit:hover { background:#e68900; }
-    .cards { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:18px; }
-    .card { background:#eaf6ff; border-radius:16px; padding:18px; border-left:6px solid #0077cc; }
-    .card b { font-size:22px; color:#0061a8; display:block; margin-top:8px; }
-    table { width:100%; border-collapse:collapse; margin-top:16px; font-size:13px; }
-    th, td { border:1px solid #d7e9f7; padding:9px; text-align:left; }
-    th { background:#0077cc; color:white; }
-    .small { font-size:13px; color:#557; margin-top:6px; }
-    .import-box { background:#fff7df; border:1px dashed #d99a00; padding:12px; border-radius:12px; margin-top:12px; }
-    .profit { color:#008a3d; font-weight:bold; }
-    .loss { color:#d00000; font-weight:bold; }
-    .badge { background:#eaf6ff; color:#005fae; padding:7px 10px; border-radius:999px; font-weight:bold; display:inline-block; }
-    .no-access { padding:18px; background:#fff1f1; color:#b00020; border-radius:12px; font-weight:bold; }
-    .top-user { text-align:right; font-size:14px; }
-    .hidden-cost { color:#777; font-style:italic; }
-    .search-box { margin-bottom:15px; display:flex; gap:10px; }
-    .search-box input { flex:1; }
-    .modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); z-index:1000; align-items:center; justify-content:center; }
-    .modal.active { display:flex; }
-    .modal-content { background:white; padding:25px; border-radius:15px; width:90%; max-width:500px; }
-    .modal-content h2 { margin-top:0; }
-    .modal-buttons { display:flex; gap:10px; margin-top:20px; justify-content:flex-end; }
-    .stock-warning { color:#d00000; font-weight:bold; margin-top:10px; }
-    .stock-ok { color:#008a3d; font-weight:bold; }
-    @media(max-width:1200px){
-      .login-container { flex-direction:column; gap:30px; }
-      .login-info { order:-1; }
-    }
-    @media(max-width:900px){
-      header { display:block; }
-      .layout { grid-template-columns:1fr; }
-      nav { display:grid; grid-template-columns:repeat(2,1fr); gap:6px; }
-      nav button { margin:0; }
-      .grid, .cards { grid-template-columns:1fr; }
-      table { font-size:11px; }
-      .login-info h2 { font-size:24px; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phần Mềm Quản Lý</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Phần Mềm Quản Lý</h1>
+            <nav class="nav-menu">
+                <button class="nav-btn active" onclick="showTab('dashboard')">📈 Dashboard</button>
+                <button class="nav-btn" onclick="showTab('permissions')">🔐 Phân Quyền</button>
+                <button class="nav-btn" onclick="showTab('pricing')">💰 Bảng Giá</button>
+                <button class="nav-btn" onclick="showTab('orders')">📦 Tạo Đơn</button>
+                <button class="nav-btn" onclick="showTab('warehouse')">🏭 Kho</button>
+            </nav>
+        </header>
 
-<div id="loginPage" class="login-page">
-  <div class="login-container">
-    <div class="login-info">
-      <h2>🚀 MINI ERP SIMILOCK</h2>
-      <div class="login-info-desc">
-        Hệ thống quản lý bán hàng, kho, nhân viên, chi phí và lợi nhuận với phân quyền theo vai trò. Vui lòng nhập tài khoản và mật khẩu để đăng nhập.
-      </div>
+        <!-- Dashboard Tab -->
+        <section id="dashboard" class="tab-content active">
+            <h2>Dashboard</h2>
+            <div class="dashboard-stats">
+                <div class="stat-card">
+                    <h3>👥 Người Dùng</h3>
+                    <p class="stat-value" id="userCount">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>💰 Doanh Thu</h3>
+                    <p class="stat-value" id="revenue">0 đ</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📦 Đơn Hàng</h3>
+                    <p class="stat-value" id="orderCount">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>📊 Sản Phẩm</h3>
+                    <p class="stat-value" id="productCount">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Permissions Tab -->
+        <section id="permissions" class="tab-content">
+            <h2>Quản Lý Phân Quyền</h2>
+            
+            <div class="form-section">
+                <h3>Thêm Người Dùng Mới</h3>
+                <form id="addUserForm" class="form-grid">
+                    <input type="text" id="userName" placeholder="Tên người dùng" required>
+                    <input type="email" id="userEmail" placeholder="Email" required>
+                    <select id="userRole">
+                        <option value="admin">Admin</option>
+                        <option value="manager">Quản Lý</option>
+                        <option value="staff">Nhân Viên</option>
+                        <option value="viewer">Xem Dữ Liệu</option>
+                    </select>
+                    <button type="submit" class="btn-primary">Thêm Người Dùng</button>
+                </form>
+            </div>
+
+            <div class="table-section">
+                <h3>Danh Sách Phân Quyền</h3>
+                <table class="permissions-table">
+                    <thead>
+                        <tr>
+                            <th>Người Dùng</th>
+                            <th>Email</th>
+                            <th>Vai Trò</th>
+                            <th>Xem</th>
+                            <th>Thêm</th>
+                            <th>Sửa</th>
+                            <th>Xóa</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="permissionsTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="permission-matrix">
+                <h3>Ma Trận Quyền</h3>
+                <table class="matrix-table">
+                    <thead>
+                        <tr>
+                            <th>Vai Trò</th>
+                            <th>Xem Dữ Liệu</th>
+                            <th>Thêm Mục</th>
+                            <th>Sửa Mục</th>
+                            <th>Xóa Mục</th>
+                            <th>Quản Lý Người Dùng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Admin</strong></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Quản Lý</strong></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Nhân Viên</strong></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Xem Dữ Liệu</strong></td>
+                            <td><input type="checkbox" checked disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                            <td><input type="checkbox" disabled></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Pricing Tab -->
+        <section id="pricing" class="tab-content">
+            <h2>Quản Lý Bảng Giá</h2>
+            
+            <div class="form-section">
+                <h3>Thêm Sản Phẩm Mới</h3>
+                <form id="addProductForm" class="form-grid">
+                    <input type="text" id="productName" placeholder="Tên sản phẩm" required>
+                    <input type="text" id="productCode" placeholder="Mã sản phẩm" required>
+                    <input type="text" id="productUnit" placeholder="Đơn vị tính" required>
+                    <input type="number" id="importPrice" placeholder="Giá nhập" step="0.01" required>
+                    <input type="number" id="distributorPrice" placeholder="Giá bán đại lý" step="0.01" required>
+                    <input type="number" id="collaboratorPrice" placeholder="Giá cộng tác viên" step="0.01" required>
+                    <input type="number" id="retailPrice" placeholder="Giá lẻ" step="0.01" required>
+                    <button type="submit" class="btn-primary">Thêm Sản Phẩm</button>
+                </form>
+            </div>
+
+            <div class="table-section">
+                <h3>Danh Sách Bảng Giá</h3>
+                <table class="pricing-table">
+                    <thead>
+                        <tr>
+                            <th>Mã SP</th>
+                            <th>Tên Sản Phẩm</th>
+                            <th>Đơn Vị</th>
+                            <th>Giá Nhập</th>
+                            <th>Giá ĐL</th>
+                            <th>Giá CTV</th>
+                            <th>Giá Lẻ</th>
+                            <th>Lợi Nhuận %</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricingTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Orders Tab -->
+        <section id="orders" class="tab-content">
+            <h2>Tạo Đơn Hàng</h2>
+            
+            <div class="form-section">
+                <h3>Thông Tin Đơn Hàng</h3>
+                <form id="createOrderForm" class="form-grid">
+                    <input type="text" id="orderCode" placeholder="Mã đơn hàng" readonly>
+                    <input type="date" id="orderDate" required>
+                    <input type="text" id="customerName" placeholder="Tên khách hàng" required>
+                    <input type="email" id="customerEmail" placeholder="Email khách hàng" required>
+                    <input type="tel" id="customerPhone" placeholder="Số điện thoại" required>
+                    <input type="text" id="customerAddress" placeholder="Địa chỉ giao hàng" required>
+                </form>
+            </div>
+
+            <div class="order-items">
+                <h3>Chi Tiết Đơn Hàng</h3>
+                <table class="order-table">
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>Sản Phẩm</th>
+                            <th>Số Lượng</th>
+                            <th>Giá Đơn Vị</th>
+                            <th>Thành Tiền</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orderItemsBody">
+                        <tr class="add-item-row">
+                            <td colspan="6">
+                                <button type="button" class="btn-secondary" onclick="addOrderItem()">+ Thêm Sản Phẩm</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="order-summary">
+                <div class="summary-box">
+                    <p>Tổng Cộng: <span id="totalAmount">0</span> đ</p>
+                    <p>Chiết Khấu: <span id="discount">0</span> %</p>
+                    <p>Thành Tiền: <span id="finalAmount">0</span> đ</p>
+                </div>
+            </div>
+
+            <div class="order-actions">
+                <button class="btn-primary" onclick="printOrderA5()">🖨️ In Đơn (A5)</button>
+                <button class="btn-secondary" onclick="saveOrder()">💾 Lưu Đơn</button>
+                <button class="btn-secondary" onclick="resetOrder()">🔄 Làm Mới</button>
+            </div>
+
+            <div class="orders-history">
+                <h3>Lịch Sử Đơn Hàng</h3>
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Ngày</th>
+                            <th>Khách Hàng</th>
+                            <th>Tổng Tiền</th>
+                            <th>Trạng Thái</th>
+                            <th>Hành Động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersHistoryBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Warehouse Tab -->
+        <section id="warehouse" class="tab-content">
+            <h2>Quản Lý Kho</h2>
+
+            <div class="warehouse-tabs">
+                <button class="warehouse-tab-btn active" onclick="showWarehouseTab('receipt')">📥 Phiếu Nhập Kho</button>
+                <button class="warehouse-tab-btn" onclick="showWarehouseTab('inventory')">📊 Tồn Kho</button>
+                <button class="warehouse-tab-btn" onclick="showWarehouseTab('export')">📤 Phiếu Xuất Kho</button>
+            </div>
+
+            <!-- Warehouse Receipt -->
+            <div id="receipt" class="warehouse-content active">
+                <h3>Phiếu Nhập Kho</h3>
+                
+                <div class="form-section">
+                    <h4>Tạo Phiếu Nhập Mới</h4>
+                    <form id="warehouseReceiptForm" class="form-grid">
+                        <input type="text" id="receiptCode" placeholder="Mã phiếu" readonly>
+                        <input type="date" id="receiptDate" required>
+                        <input type="text" id="supplierName" placeholder="Tên nhà cung cấp" required>
+                        <input type="text" id="receiptNote" placeholder="Ghi chú">
+                    </form>
+                </div>
+
+                <div class="receipt-items">
+                    <h4>Chi Tiết Nhập Kho</h4>
+                    <table class="receipt-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã SP</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Số Lượng</th>
+                                <th>Giá Nhập</th>
+                                <th>Thành Tiền</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptItemsBody">
+                            <tr class="add-item-row">
+                                <td colspan="7">
+                                    <button type="button" class="btn-secondary" onclick="addReceiptItem()">+ Thêm Sản Phẩm</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="receipt-summary">
+                    <p>Tổng Giá Trị Nhập: <span id="receiptTotal">0</span> đ</p>
+                </div>
+
+                <div class="receipt-actions">
+                    <button class="btn-primary" onclick="printReceipt()">🖨️ In Phiếu</button>
+                    <button class="btn-secondary" onclick="saveReceipt()">💾 Lưu Phiếu</button>
+                    <button class="btn-secondary" onclick="resetReceipt()">🔄 Làm Mới</button>
+                </div>
+
+                <div class="receipts-history">
+                    <h4>Lịch Sử Nhập Kho</h4>
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>Mã Phiếu</th>
+                                <th>Ngày</th>
+                                <th>Nhà Cung Cấp</th>
+                                <th>Tổng Giá Trị</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="receiptsHistoryBody">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Inventory -->
+            <div id="inventory" class="warehouse-content">
+                <h3>Tồn Kho Hiện Tại</h3>
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Mã SP</th>
+                            <th>Tên Sản Phẩm</th>
+                            <th>Tồn Kho</th>
+                            <th>Giá Nhập</th>
+                            <th>Giá Lẻ</th>
+                            <th>Giá Trị Tồn</th>
+                            <th>Trạng Thái</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inventoryTableBody">
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Export Receipt -->
+            <div id="export" class="warehouse-content">
+                <h3>Phiếu Xuất Kho</h3>
+                
+                <div class="form-section">
+                    <h4>Tạo Phiếu Xuất Mới</h4>
+                    <form id="warehouseExportForm" class="form-grid">
+                        <input type="text" id="exportCode" placeholder="Mã phiếu xuất" readonly>
+                        <input type="date" id="exportDate" required>
+                        <input type="text" id="exportReason" placeholder="Lý do xuất (bán hàng/hỏng/...)">
+                    </form>
+                </div>
+
+                <div class="export-items">
+                    <h4>Chi Tiết Xuất Kho</h4>
+                    <table class="export-table">
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Mã SP</th>
+                                <th>Tên Sản Phẩm</th>
+                                <th>Số Lượng</th>
+                                <th>Giá Đơn Vị</th>
+                                <th>Thành Tiền</th>
+                                <th>Hành Động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="exportItemsBody">
+                            <tr class="add-item-row">
+                                <td colspan="7">
+                                    <button type="button" class="btn-secondary" onclick="addExportItem()">+ Thêm Sản Phẩm</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="export-summary">
+                    <p>Tổng Giá Trị Xuất: <span id="exportTotal">0</span> đ</p>
+                </div>
+
+                <div class="export-actions">
+                    <button class="btn-primary" onclick="printExport()">🖨️ In Phiếu</button>
+                    <button class="btn-secondary" onclick="saveExport()">💾 Lưu Phiếu</button>
+                    <button class="btn-secondary" onclick="resetExport()">🔄 Làm Mới</button>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <div class="login-box">
-      <h1>🔐 Đăng nhập</h1>
-      <label>Tài khoản</label>
-      <input id="loginUser" placeholder="Nhập tài khoản" autofocus>
-      <label>Mật khẩu</label>
-      <input id="loginPass" type="password" placeholder="Nhập mật khẩu" onkeypress="if(event.key==='Enter') login()">
-      <button class="primary" style="width:100%;" onclick="login()">ĐĂNG NHẬP</button>
-    </div>
-  </div>
-</div>
+    <!-- Hidden Print Container -->
+    <div id="printContainer" style="display: none;"></div>
 
-<div id="appPage" style="display:none;">
-<header>
-  <div>
-    <h1>🚀 MINI ERP SIMILOCK</h1>
-    <div>Quản lý bán hàng • kho • nhân viên • chi phí • lợi nhuận • phân quyền</div>
-  </div>
-  <div class="top-user">
-    <div id="currentUserText"></div>
-    <button class="gray" onclick="logout()">Đăng xuất</button>
-  </div>
-</header>
-
-<div class="layout">
-  <nav>
-    <button data-tab="dashboard" class="active" onclick="showTab('dashboard', this)">📊 Dashboard</button>
-    <button data-tab="customers" onclick="showTab('customers', this)">👥 Khách hàng</button>
-    <button data-tab="products" onclick="showTab('products', this)">🔐 Sản phẩm</button>
-    <button data-tab="sales" onclick="showTab('sales', this)">🛒 Bán hàng</button>
-    <button data-tab="inventory" onclick="showTab('inventory', this)">📦 Kho hàng</button>
-    <button data-tab="staff" onclick="showTab('staff', this)">👨‍💼 Nhân viên</button>
-    <button data-tab="expenses" onclick="showTab('expenses', this)">💸 Chi phí</button>
-    <button data-tab="users" onclick="showTab('users', this)">🔑 Tài khoản & phân quyền</button>
-    <button data-tab="data" onclick="showTab('data', this)">💾 Dữ liệu</button>
-  </nav>
-
-  <main>
-    <section id="dashboard" class="active">
-      <h2>📊 Dashboard tổng quan</h2>
-      <div id="dashboardContent"></div>
-    </section>
-
-    <section id="customers">
-      <h2>👥 Quản lý khách hàng</h2>
-      <div class="grid">
-        <div><label>Mã KH</label><input id="cCode" placeholder="KH001"></div>
-        <div><label>Tên khách hàng</label><input id="cName" placeholder="Đại lý Minh Anh"></div>
-        <div><label>Loại khách</label><select id="cType"><option>Khách lẻ</option><option>Khách đại lý</option><option>CTV</option></select></div>
-        <div><label>Chiết khấu (%)</label><input type="number" id="cDiscount"></div>
-        <div><label>Điện thoại</label><input id="cPhone"></div>
-        <div><label>Địa chỉ</label><input id="cAddress"></div>
-      </div>
-      <button class="primary" onclick="addCustomer()">LƯU KHÁCH HÀNG</button>
-      <div class="import-box">
-        <b>Import khách hàng CSV</b>
-        <div class="small">Cột: code,name,type,phone,address,discount</div>
-        <input type="file" accept=".csv" onchange="importCSV(event,'customers')">
-      </div>
-      <table><thead><tr><th>Mã</th><th>Tên</th><th>Loại</th><th>SĐT</th><th>Địa chỉ</th><th>CK</th><th>Xóa</th></tr></thead><tbody id="customerTable"></tbody></table>
-    </section>
-
-    <section id="products">
-      <h2>🔐 Quản lý sản phẩm</h2>
-      <div class="search-box">
-        <input type="search" id="productSearch" placeholder="🔍 Tìm kiếm sản phẩm..." onkeyup="filterProducts()">
-      </div>
-      <div id="productForm"></div>
-      <table id="productTableWrap"></table>
-    </section>
-
-    <section id="sales">
-      <h2>🛒 Bán hàng & tính hoa hồng</h2>
-      <div class="grid">
-        <div><label>Khách hàng</label><select id="sCustomer"></select></div>
-        <div><label>Sản phẩm</label><select id="sProduct" onchange="fillProductPrice()"></select></div>
-        <div><label>Số lượng</label><input type="number" id="sQty" value="1"></div>
-        <div><label>Giá bán / 1 SP</label><input type="number" id="sPrice"></div>
-        <div><label>Chiết khấu riêng (%)</label><input type="number" id="sDiscount" placeholder="Bỏ trống dùng CK khách"></div>
-        <div><label>Nhân viên sale</label><select id="sStaff"></select></div>
-        <div><label>Hoa hồng sale</label><input type="number" id="sCommission" placeholder="VD: 200000"></div>
-        <div class="cost-field"><label>Chi phí kỹ thuật</label><input type="number" id="sTechCost"></div>
-        <div class="cost-field"><label>Chi phí khác</label><input type="number" id="sOtherCost"></div>
-      </div>
-      <button class="primary" onclick="createOrder()">TẠO ĐƠN & TRỪ KHO</button>
-      <table><thead id="orderHead"></thead><tbody id="orderTable"></tbody></table>
-    </section>
-
-    <section id="inventory">
-      <h2>📦 Kho hàng & Xuất nhập tồn</h2>
-      <h3>Cập nhật kho</h3>
-      <div class="grid">
-        <div><label>Sản phẩm</label><select id="iProduct"></select></div>
-        <div><label>Loại phiếu</label><select id="iType"><option value="in">📥 Nhập kho</option><option value="out">📤 Xuất kho</option><option value="adjust">🔧 Điều chỉnh</option></select></div>
-        <div><label>Số lượng</label><input type="number" id="iQty" value="1" min="0"></div>
-        <div><label>Ghi chú</label><input id="iNote"></div>
-      </div>
-      <button class="primary" onclick="stockMove()">CẬP NHẬT KHO</button>
-      
-      <h3>Tồn kho hiện tại</h3>
-      <table><thead><tr><th>Mã</th><th>Sản phẩm</th><th>Tồn kho</th><th>Giá vốn</th><th>Giá bán</th></tr></thead><tbody id="stockTable"></tbody></table>
-
-      <h3>Lịch sử xuất nhập</h3>
-      <table><thead><tr><th>Ngày</th><th>Sản phẩm</th><th>Loại</th><th>Số lượng</th><th>Ghi chú</th></tr></thead><tbody id="stockHistoryTable"></tbody></table>
-    </section>
-
-    <section id="staff">
-      <h2>👨‍💼 Nhân viên & phòng ban</h2>
-      <div class="grid">
-        <div><label>Mã NV</label><input id="eCode"></div>
-        <div><label>Tên nhân viên</label><input id="eName"></div>
-        <div><label>Phòng ban</label><select id="eDept"><option>Sale</option><option>Kỹ thuật</option><option>Kế toán</option><option>Kho</option><option>Quản lý</option></select></div>
-        <div><label>SĐT</label><input id="ePhone"></div>
-      </div>
-      <button class="primary" onclick="addStaff()">LƯU NHÂN VIÊN</button>
-      <table><thead><tr><th>Mã</th><th>Tên</th><th>Phòng ban</th><th>SĐT</th><th>Xóa</th></tr></thead><tbody id="staffTable"></tbody></table>
-    </section>
-
-    <section id="expenses">
-      <h2>💸 Chi phí</h2>
-      <div class="grid">
-        <div><label>Khoản chi</label><input id="xName"></div>
-        <div><label>Nhóm chi phí</label><select id="xType"><option>Marketing</option><option>Kỹ thuật</option><option>Vận hành</option><option>Kho</option><option>Khác</option></select></div>
-        <div><label>Số tiền</label><input type="number" id="xAmount"></div>
-        <div><label>Ghi chú</label><input id="xNote"></div>
-      </div>
-      <button class="primary" onclick="addExpense()">LƯU CHI PHÍ</button>
-      <table><thead><tr><th>Ngày</th><th>Khoản chi</th><th>Nhóm</th><th>Số tiền</th><th>Ghi chú</th><th>Sửa</th><th>Xóa</th></tr></thead><tbody id="expenseTable"></tbody></table>
-    </section>
-
-    <section id="users">
-      <h2>🔑 Tài khoản & phân quyền</h2>
-      <div class="grid">
-        <div><label>Tài khoản</label><input id="uUsername"></div>
-        <div><label>Mật khẩu</label><input id="uPassword" type="password"></div>
-        <div><label>Họ tên</label><input id="uName"></div>
-        <div><label>Vai trò</label>
-          <select id="uRole">
-            <option value="admin">Admin - toàn quyền</option>
-            <option value="manager">Quản lý - xem doanh thu/lợi nhuận</option>
-            <option value="sale">Nhân viên sale - không xem giá vốn/lợi nhuận</option>
-            <option value="technician">Kỹ thuật - xem đơn và kho</option>
-            <option value="accountant">Kế toán - xem doanh thu/chi phí</option>
-          </select>
-        </div>
-      </div>
-      <button class="primary" onclick="addUser()">TẠO TÀI KHOẢN</button>
-      <table><thead><tr><th>Tài khoản</th><th>Họ tên</th><th>Vai trò</th><th>Quyền</th><th>Xóa</th></tr></thead><tbody id="userTable"></tbody></table>
-    </section>
-
-    <section id="data">
-      <h2>💾 Xuất / nhập dữ liệu</h2>
-      <button class="primary" onclick="exportAll()">TẢI BACKUP JSON</button>
-      <button class="primary" onclick="downloadCSV('orders')">XUẤT ĐƠN HÀNG CSV</button>
-      <button class="primary" onclick="downloadCSV('customers')">XUẤT KHÁCH HÀNG CSV</button>
-      <button class="primary" onclick="downloadCSV('products')">XUẤT SẢN PHẨM CSV</button>
-      <div class="import-box"><b>Khôi phục dữ liệu JSON</b><input type="file" accept=".json" onchange="importJSON(event)"></div>
-      <button class="danger" onclick="resetAll()">XÓA TOÀN BỘ DỮ LIỆU</button>
-    </section>
-  </main>
-</div>
-</div>
-
-<div id="editExpenseModal" class="modal">
-  <div class="modal-content">
-    <h2>Sửa chi phí</h2>
-    <div class="grid">
-      <div><label>Khoản chi</label><input id="editXName"></div>
-      <div><label>Nhóm chi phí</label><select id="editXType"><option>Marketing</option><option>Kỹ thuật</option><option>Vận hành</option><option>Kho</option><option>Khác</option></select></div>
-      <div><label>Số tiền</label><input type="number" id="editXAmount"></div>
-      <div><label>Ghi chú</label><input id="editXNote"></div>
-    </div>
-    <div class="modal-buttons">
-      <button class="gray" onclick="closeEditExpenseModal()">Hủy</button>
-      <button class="primary" onclick="saveEditExpense()">Lưu</button>
-    </div>
-  </div>
-</div>
-
-<script>
-let db = JSON.parse(localStorage.getItem('similockERPAuth') || '{}');
-db.users ||= [
-  {username:'admin', password:'123456', name:'Admin Similock', role:'admin'},
-  {username:'sale1', password:'123456', name:'Nhân viên Sale 1', role:'sale'},
-  {username:'kt1', password:'123456', name:'Kỹ thuật 1', role:'technician'}
-];
-db.customers ||= [
-  {code:'KH001', name:'Khách lẻ mặc định', type:'Khách lẻ', phone:'', address:'', discount:0},
-  {code:'DL001', name:'Đại lý mặc định', type:'Khách đại lý', phone:'', address:'', discount:10},
-  {code:'CTV001', name:'CTV mặc định', type:'CTV', phone:'', address:'', discount:5}
-];
-db.products ||= [
-  {code:'S01', name:'SIMILOCK S01', category:'Khóa cửa nhôm', cost:1500000, price:2350000, stock:10},
-  {code:'F07', name:'SIMILOCK F07', category:'Khóa cửa gỗ/composite', cost:1200000, price:1850000, stock:10},
-  {code:'569', name:'SIMILOCK 569 WiFi', category:'Khóa cổng/cửa sắt', cost:2200000, price:3350000, stock:5}
-];
-db.staff ||= [{code:'NV001', name:'Sale mặc định', dept:'Sale', phone:''}, {code:'KT001', name:'Kỹ thuật mặc định', dept:'Kỹ thuật', phone:''}];
-db.orders ||= [];
-db.expenses ||= [];
-db.stockHistory ||= [];
-
-let currentUser = JSON.parse(sessionStorage.getItem('similockCurrentUser') || 'null');
-let editingExpenseIndex = null;
-
-const roleNames = {
-  admin:'Admin',
-  manager:'Quản lý',
-  sale:'Nhân viên sale',
-  technician:'Kỹ thuật',
-  accountant:'Kế toán'
-};
-
-const permissions = {
-  admin: ['dashboard','customers','products','sales','inventory','staff','expenses','users','data','cost','profit','delete','export'],
-  manager: ['dashboard','customers','products','sales','inventory','staff','expenses','data','cost','profit','export'],
-  sale: ['customers','sales','inventory','commission'],
-  technician: ['sales','inventory'],
-  accountant: ['dashboard','customers','sales','expenses','data','profit','export']
-};
-
-function can(p){ return currentUser && permissions[currentUser.role] && permissions[currentUser.role].includes(p); }
-function save(){ localStorage.setItem('similockERPAuth', JSON.stringify(db)); renderAll(); }
-function money(n){ return Number(n||0).toLocaleString('vi-VN') + ' VNĐ'; }
-function v(id){ return document.getElementById(id).value; }
-function n(id){ return Number(document.getElementById(id).value)||0; }
-function today(){ return new Date().toLocaleDateString('vi-VN'); }
-function hideMoney(){ return '<span class="hidden-cost">Đã ẩn</span>'; }
-
-function login(){
-  const u = v('loginUser').trim();
-  const p = v('loginPass');
-  const found = db.users.find(x => x.username === u && x.password === p);
-  if(!found) return alert('Sai tài khoản hoặc mật khẩu');
-  currentUser = {username:found.username, name:found.name, role:found.role};
-  sessionStorage.setItem('similockCurrentUser', JSON.stringify(currentUser));
-  openApp();
-}
-function logout(){
-  sessionStorage.removeItem('similockCurrentUser');
-  location.reload();
-}
-function openApp(){
-  document.getElementById('loginPage').style.display='none';
-  document.getElementById('appPage').style.display='block';
-  document.getElementById('currentUserText').innerHTML = `<b>${currentUser.name}</b><br><span class="badge">${roleNames[currentUser.role]}</span>`;
-  applyMenuPermission();
-  const first = document.querySelector('nav button:not(.hidden)');
-  if(first) showTab(first.dataset.tab, first);
-  renderAll();
-}
-function applyMenuPermission(){
-  document.querySelectorAll('nav button').forEach(btn => {
-    btn.classList.toggle('hidden', !can(btn.dataset.tab));
-  });
-}
-
-function showTab(id, btn){
-  if(!can(id)) return alert('Bạn không có quyền vào mục này');
-  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-  renderAll();
-}
-
-function addCustomer(){
-  if(!can('customers')) return;
-  db.customers.push({code:v('cCode')||'KH'+Date.now(), name:v('cName')||'Chưa đặt tên', type:v('cType'), phone:v('cPhone'), address:v('cAddress'), discount:n('cDiscount')});
-  save();
-}
-function addProduct(){
-  if(!can('products')) return;
-  db.products.push({code:v('pCode')||'SP'+Date.now(), name:v('pName')||'Chưa đặt tên', category:v('pCategory'), cost:n('pCost'), price:n('pPrice'), stock:n('pStock')});
-  save();
-}
-function addStaff(){
-  if(!can('staff')) return;
-  db.staff.push({code:v('eCode')||'NV'+Date.now(), name:v('eName')||'Chưa đặt tên', dept:v('eDept'), phone:v('ePhone')});
-  save();
-}
-function addUser(){
-  if(!can('users')) return;
-  db.users.push({username:v('uUsername'), password:v('uPassword') || '123456', name:v('uName'), role:v('uRole')});
-  save();
-}
-function addExpense(){
-  if(!can('expenses')) return;
-  db.expenses.unshift({date:today(), name:v('xName'), type:v('xType'), amount:n('xAmount'), note:v('xNote')});
-  save();
-}
-function del(arr, i){
-  if(!can('delete')) return alert('Bạn không có quyền xóa');
-  db[arr].splice(i,1); save();
-}
-
-function openEditExpenseModal(i){
-  if(currentUser.role !== 'admin') return alert('Chỉ Admin mới được sửa chi phí');
-  editingExpenseIndex = i;
-  const exp = db.expenses[i];
-  document.getElementById('editXName').value = exp.name;
-  document.getElementById('editXType').value = exp.type;
-  document.getElementById('editXAmount').value = exp.amount;
-  document.getElementById('editXNote').value = exp.note;
-  document.getElementById('editExpenseModal').classList.add('active');
-}
-function closeEditExpenseModal(){
-  document.getElementById('editExpenseModal').classList.remove('active');
-  editingExpenseIndex = null;
-}
-function saveEditExpense(){
-  if(editingExpenseIndex === null) return;
-  db.expenses[editingExpenseIndex] = {
-    date: db.expenses[editingExpenseIndex].date,
-    name: v('editXName'),
-    type: v('editXType'),
-    amount: n('editXAmount'),
-    note: v('editXNote')
-  };
-  closeEditExpenseModal();
-  save();
-}
-
-function fillProductPrice(){
-  const p = db.products[document.getElementById('sProduct').selectedIndex];
-  if(p) document.getElementById('sPrice').value = p.price;
-}
-function createOrder(){
-  if(!can('sales')) return;
-  const ci = document.getElementById('sCustomer').selectedIndex;
-  const pi = document.getElementById('sProduct').selectedIndex;
-  const si = document.getElementById('sStaff').selectedIndex;
-  const c = db.customers[ci], p = db.products[pi], st = db.staff[si];
-  if(!c || !p) return alert('Thiếu khách hàng hoặc sản phẩm');
-  const qty = n('sQty') || 1;
-  if(p.stock <= 0) return alert('❌ Kho sản phẩm này đã hết! Không thể tạo phiếu.');
-  if(p.stock < qty) alert('⚠️ Cảnh báo: tồn kho không đủ, vẫn cho tạo đơn.');
-  const price = n('sPrice') || p.price;
-  const discountInput = v('sDiscount');
-  const discount = discountInput === '' ? Number(c.discount||0) : Number(discountInput);
-  const gross = price * qty;
-  const discountMoney = gross * discount / 100;
-  const revenue = gross - discountMoney;
-  const productCost = Number(p.cost||0) * qty;
-  const commission = n('sCommission');
-  const techCost = n('sTechCost'), otherCost = n('sOtherCost');
-  const totalCost = productCost + commission + techCost + otherCost;
-  const profit = revenue - totalCost;
-  p.stock -= qty;
-  db.orders.unshift({date:today(), customer:c.name, customerType:c.type, product:p.name, qty, gross, discount, revenue, productCost, commission, techCost, otherCost, totalCost, profit, staff:st?st.name:'Không chỉ định'});
-  save();
-}
-function stockMove(){
-  if(!can('inventory')) return;
-  const p = db.products[document.getElementById('iProduct').selectedIndex];
-  if(!p) return;
-  const qty = n('iQty');
-  const type = v('iType');
-  const note = v('iNote');
-  
-  if(type === 'out' && p.stock < qty) return alert('❌ Kho không đủ để xuất!');
-  if(qty <= 0) return alert('❌ Số lượng phải lớn hơn 0!');
-  
-  if(type === 'in') p.stock += qty;
-  else if(type === 'out') p.stock -= qty;
-  else if(type === 'adjust') p.stock = qty;
-  
-  db.stockHistory.unshift({date:today(), product:p.name, type:type === 'in' ? 'Nhập' : type === 'out' ? 'Xuất' : 'Điều chỉnh', qty, note});
-  save();
-}
-
-function filterProducts(){
-  const search = document.getElementById('productSearch').value.toLowerCase();
-  const rows = document.querySelectorAll('#productTableWrap tbody tr');
-  rows.forEach(row => {
-    const text = row.textContent.toLowerCase();
-    row.style.display = text.includes(search) ? '' : 'none';
-  });
-}
-
-function renderAll(){
-  if(!currentUser) return;
-  renderDashboard();
-  renderCustomers();
-  renderProducts();
-  renderSales();
-  renderInventory();
-  renderStaff();
-  renderExpenses();
-  renderUsers();
-  fillSelects();
-  document.querySelectorAll('.cost-field').forEach(el => el.style.display = can('cost') ? 'block' : 'none');
-}
-function renderDashboard(){
-  if(!can('dashboard')) return;
-  const revenue = db.orders.reduce((s,o)=>s+Number(o.revenue||0),0);
-  const orderProfit = db.orders.reduce((s,o)=>s+Number(o.profit||0),0);
-  const expenses = db.expenses.reduce((s,x)=>s+Number(x.amount||0),0);
-  const profit = orderProfit - expenses;
-  const showProfit = can('profit');
-  document.getElementById('dashboardContent').innerHTML = `
-    <div class="cards">
-      <div class="card">Doanh thu <b>${money(revenue)}</b></div>
-      <div class="card">Lợi nhuận <b>${showProfit ? money(profit) : 'Đã ẩn'}</b></div>
-      <div class="card">Đơn hàng <b>${db.orders.length}</b></div>
-      <div class="card">Khách hàng <b>${db.customers.length}</b></div>
-    </div>
-    <h3>Top sản phẩm bán chạy</h3>
-    <table><thead><tr><th>Sản phẩm</th><th>Số lượng</th><th>Doanh thu</th></tr></thead><tbody>${topProducts()}</tbody></table>
-    <h3>Top nhân viên</h3>
-    <table><thead><tr><th>Nhân viên</th><th>Đơn hàng</th><th>Doanh thu</th><th>${showProfit?'Lợi nhuận':'Hoa hồng'}</th></tr></thead><tbody>${topStaff()}</tbody></table>
-  `;
-}
-function topProducts(){
-  const prod = {};
-  db.orders.forEach(o=>{ prod[o.product] ||= {qty:0, revenue:0}; prod[o.product].qty += Number(o.qty||0); prod[o.product].revenue += Number(o.revenue||0); });
-  return Object.entries(prod).map(([k,v])=>`<tr><td>${k}</td><td>${v.qty}</td><td>${money(v.revenue)}</td></tr>`).join('');
-}
-function topStaff(){
-  const staff = {};
-  db.orders.forEach(o=>{ staff[o.staff] ||= {count:0,revenue:0,profit:0,commission:0}; staff[o.staff].count++; staff[o.staff].revenue += Number(o.revenue||0); staff[o.staff].profit += Number(o.profit||0); staff[o.staff].commission += Number(o.commission||0); });
-  return Object.entries(staff).map(([k,v])=>`<tr><td>${k}</td><td>${v.count}</td><td>${money(v.revenue)}</td><td>${can('profit')?money(v.profit):money(v.commission)}</td></tr>`).join('');
-}
-function renderCustomers(){
-  document.getElementById('customerTable').innerHTML = db.customers.map((c,i)=>`<tr><td>${c.code}</td><td>${c.name}</td><td>${c.type}</td><td>${c.phone}</td><td>${c.address}</td><td>${c.discount}%</td><td>${can('delete')?`<button class="danger" onclick="del('customers',${i})">Xóa</button>`:''}</td></tr>`).join('');
-}
-function renderProducts(){
-  const productForm = document.getElementById('productForm');
-  const productTable = document.getElementById('productTableWrap');
-  if(!can('products')) return;
-  if(can('cost')){
-    productForm.innerHTML = `
-      <div class="grid">
-        <div><label>Mã SP</label><input id="pCode"></div><div><label>Tên sản phẩm</label><input id="pName"></div>
-        <div><label>Danh mục</label><select id="pCategory"><option>Khóa cửa nhôm</option><option>Khóa cửa gỗ/composite</option><option>Khóa cổng/cửa sắt</option><option>Phụ kiện</option></select></div>
-        <div><label>Giá vốn</label><input type="number" id="pCost"></div><div><label>Giá bán</label><input type="number" id="pPrice"></div><div><label>Tồn kho</label><input type="number" id="pStock"></div>
-      </div><button class="primary" onclick="addProduct()">LƯU SẢN PHẨM</button>
-      <div class="import-box"><b>Import sản phẩm CSV</b><div class="small">Cột: code,name,category,cost,price,stock</div><input type="file" accept=".csv" onchange="importCSV(event,'products')"></div>
-    `;
-  } else {
-    productForm.innerHTML = `<div class="no-access">Vai trò hiện tại chỉ xem được sản phẩm, giá bán và tồn kho. Giá vốn đã được ẩn.</div>`;
-  }
-  productTable.innerHTML = `<thead><tr><th>Mã</th><th>Tên</th><th>Danh mục</th><th>Giá vốn</th><th>Giá bán</th><th>Tồn</th><th>Xóa</th></tr></thead><tbody>` + 
-    db.products.map((p,i)=>`<tr><td>${p.code}</td><td>${p.name}</td><td>${p.category}</td><td>${can('cost')?money(p.cost):hideMoney()}</td><td>${money(p.price)}</td><td>${p.stock > 0 ? `<span class="stock-ok">✓ ${p.stock}</span>` : `<span class="stock-warning">✗ 0</span>`}</td><td>${can('delete')?`<button class="danger" onclick="del('products',${i})">Xóa</button>`:''}</td></tr>`).join('')+'</tbody>';
-}
-function renderSales(){
-  document.getElementById('orderHead').innerHTML = can('profit')
-    ? `<tr><th>Ngày</th><th>Khách</th><th>Loại</th><th>Sản phẩm</th><th>SL</th><th>Doanh thu</th><th>Giá vốn</th><th>Hoa hồng</th><th>Chi phí</th><th>Lợi nhuận</th><th>NV</th><th></th></tr>`
-    : `<tr><th>Ngày</th><th>Khách</th><th>Loại</th><th>Sản phẩm</th><th>SL</th><th>Doanh thu</th><th>Hoa hồng</th><th>NV</th></tr>`;
-  document.getElementById('orderTable').innerHTML = db.orders.map((o,i)=>{
-    if(can('profit')){
-      return `<tr><td>${o.date}</td><td>${o.customer}</td><td>${o.customerType}</td><td>${o.product}</td><td>${o.qty}</td><td>${money(o.revenue)}</td><td>${money(o.productCost)}</td><td>${money(o.commission)}</td><td>${money(o.techCost+o.otherCost)}</td><td class="${o.profit>=0?'profit':'loss'}">${money(o.profit)}</td><td>${o.staff}</td><td>${can('delete')?`<button class="danger" onclick="del('orders',${i})">Xóa</button>`:''}</td></tr>`;
-    }
-    return `<tr><td>${o.date}</td><td>${o.customer}</td><td>${o.customerType}</td><td>${o.product}</td><td>${o.qty}</td><td>${money(o.revenue)}</td><td>${money(o.commission)}</td><td>${o.staff}</td></tr>`;
-  }).join('');
-}
-function renderInventory(){
-  document.getElementById('stockTable').innerHTML = db.products.map(p=>`<tr><td>${p.code}</td><td>${p.name}</td><td>${p.stock > 0 ? `<span class="stock-ok">✓ ${p.stock}</span>` : `<span class="stock-warning">✗ 0</span>`}</td><td>${can('cost')?money(p.cost):hideMoney()}</td><td>${money(p.price)}</td></tr>`).join('');
-  document.getElementById('stockHistoryTable').innerHTML = db.stockHistory.map((h,i)=>`<tr><td>${h.date}</td><td>${h.product}</td><td>${h.type}</td><td>${h.qty}</td><td>${h.note}</td></tr>`).join('');
-}
-function renderStaff(){
-  document.getElementById('staffTable').innerHTML = db.staff.map((e,i)=>`<tr><td>${e.code}</td><td>${e.name}</td><td>${e.dept}</td><td>${e.phone}</td><td>${can('delete')?`<button class="danger" onclick="del('staff',${i})">Xóa</button>`:''}</td></tr>`).join('');
-}
-function renderExpenses(){
-  if(!can('expenses')) return;
-  document.getElementById('expenseTable').innerHTML = db.expenses.map((x,i)=>`<tr><td>${x.date}</td><td>${x.name}</td><td>${x.type}</td><td>${can('profit')?money(x.amount):hideMoney()}</td><td>${x.note}</td><td>${currentUser.role==='admin'?`<button class="edit" onclick="openEditExpenseModal(${i})">Sửa</button>`:'-'}</td><td>${can('delete')?`<button class="danger" onclick="del('expenses',${i})">Xóa</button>`:''}</td></tr>`).join('');
-}
-function renderUsers(){
-  if(!can('users')) return;
-  document.getElementById('userTable').innerHTML = db.users.map((u,i)=>`<tr><td>${u.username}</td><td>${u.name}</td><td>${roleNames[u.role]}</td><td>${(permissions[u.role]||[]).join(', ')}</td><td>${can('delete')?`<button class="danger" onclick="del('users',${i})">Xóa</button>`:''}</td></tr>`).join('');
-}
-function fillSelects(){
-  ['sCustomer','sProduct','iProduct','sStaff'].forEach(id=>{ if(!document.getElementById(id)) return; });
-  document.getElementById('sCustomer').innerHTML=db.customers.map(c=>`<option>${c.name} - ${c.type} - CK ${c.discount}%</option>`).join('');
-  document.getElementById('sProduct').innerHTML=db.products.map(p=>`<option>${p.name} | tồn ${p.stock}</option>`).join('');
-  document.getElementById('iProduct').innerHTML=db.products.map(p=>`<option>${p.name}</option>`).join('');
-  document.getElementById('sStaff').innerHTML=db.staff.map(e=>`<option>${e.name} - ${e.dept}</option>`).join('');
-}
-
-function importCSV(event, type){
-  if(!can(type)) return alert('Bạn không có quyền import mục này');
-  const file = event.target.files[0]; if(!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    const lines = e.target.result.split(/\r?\n/).filter(Boolean);
-    const rows = lines.slice(1).map(line => line.split(',').map(x=>x.trim()));
-    if(type==='customers') rows.forEach(r=>db.customers.push({code:r[0], name:r[1], type:r[2]||'Khách lẻ', phone:r[3], address:r[4], discount:Number(r[5]||0)}));
-    if(type==='products') rows.forEach(r=>db.products.push({code:r[0], name:r[1], category:r[2], cost:Number(r[3]||0), price:Number(r[4]||0), stock:Number(r[5]||0)}));
-    save();
-  };
-  reader.readAsText(file, 'UTF-8');
-}
-function download(filename, text, mime='text/plain'){
-  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([text],{type:mime})); a.download=filename; a.click();
-}
-function exportAll(){ if(!can('export')) return alert('Bạn không có quyền xuất dữ liệu'); download('similock-erp-backup.json', JSON.stringify(db,null,2), 'application/json'); }
-function importJSON(event){
-  if(!can('data')) return;
-  const file=event.target.files[0]; if(!file)return;
-  const reader=new FileReader(); reader.onload=e=>{ db=JSON.parse(e.target.result); save(); }; reader.readAsText(file);
-}
-function downloadCSV(type){
-  if(!can('export')) return alert('Bạn không có quyền xuất dữ liệu');
-  const arr=db[type]||[]; if(!arr.length) return alert('Chưa có dữ liệu');
-  let exportArr = arr;
-  if(type==='orders' && !can('profit')){
-    exportArr = arr.map(o => ({date:o.date, customer:o.customer, customerType:o.customerType, product:o.product, qty:o.qty, revenue:o.revenue, commission:o.commission, staff:o.staff}));
-  }
-  if(type==='products' && !can('cost')){
-    exportArr = arr.map(p => ({code:p.code, name:p.name, category:p.category, price:p.price, stock:p.stock}));
-  }
-  const headers=Object.keys(exportArr[0]);
-  const csv=[headers.join(','), ...exportArr.map(o=>headers.map(h=>`"${String(o[h]??'').replaceAll('"','""')}"`).join(','))].join('\n');
-  download(type+'.csv', csv, 'text/csv;charset=utf-8');
-}
-function resetAll(){ if(!can('users')) return alert('Chỉ Admin được xóa toàn bộ'); if(confirm('Xóa toàn bộ dữ liệu ERP?')){ localStorage.removeItem('similockERPAuth'); sessionStorage.removeItem('similockCurrentUser'); location.reload(); }}
-
-if(currentUser) openApp();
-</script>
+    <script src="script.js"></script>
 </body>
 </html>
