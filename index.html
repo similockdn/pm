@@ -272,8 +272,8 @@
           <div class="debt-card paid"><span>Đã tất toán</span><b id="debtSettledCount">0</b><small>Lưu lịch sử phía dưới</small></div>
           <div class="debt-card danger"><span>Quá hạn</span><b id="debtOverdueTotal">0</b><small>Nợ quá 30 ngày</small></div>
         </div>
-        <div class="panel"><div class="toolbar"><b>Lọc công nợ:</b><label><input type="radio" name="debtStatusFilter" value="active" checked onchange="renderDebts()"> Đang nợ</label><label><input type="radio" name="debtStatusFilter" value="settled" onchange="renderDebts()"> Đã tất toán</label><label><input type="radio" name="debtStatusFilter" value="all" onchange="renderDebts()"> Tất cả</label><button class="btn ghost" onclick="exportExcel('debtsSettled')">Xuất công nợ đã tất toán</button></div><div class="total-box" id="debtStatsBox"></div></div>
-        <div class="panel debt-panel debt-active-panel"><div class="panel-head"><div><h3>💳 Công nợ phải thu</h3><span>Chỉ hiển thị khách còn nợ. Bấm Thu tiền để tự điền đúng số còn nợ.</span></div><button class="btn primary debt-big-btn" onclick="openReceiptForm()">+ Tạo phiếu thu</button></div><div class="toolbar"><input class="search" id="debtSearch" placeholder="Tìm công nợ theo tên khách / SĐT / mã KH" oninput="renderDebts()" /><button class="btn ghost" onclick="clearDebtSearch()">Xóa tìm</button><span id="debtSearchCount" class="muted-small"></span></div><table><thead><tr><th>Mã phiếu</th><th>Mã KH</th><th>Khách hàng</th><th>Địa chỉ</th><th>Sản phẩm</th><th>Tổng mua</th><th>Đã thu</th><th>Ngày bán</th><th>Còn nợ</th><th>Quá hạn</th><th>Thao tác nhanh</th></tr></thead><tbody id="debtTable"></tbody></table></div>
+        <div class="panel debt-filter-panel"><div class="toolbar debt-filter-toolbar"><b>Lọc công nợ:</b><label><input type="radio" name="debtStatusFilter" value="active" checked onchange="renderDebts()"> Đang nợ</label><label><input type="radio" name="debtStatusFilter" value="settled" onchange="renderDebts()"> Đã tất toán</label><label><input type="radio" name="debtStatusFilter" value="all" onchange="renderDebts()"> Tất cả</label><button class="btn ghost" onclick="exportExcel('debtsSettled')">Xuất công nợ đã tất toán</button></div><div class="total-box debt-stats-box" id="debtStatsBox"></div></div>
+        <div class="panel debt-panel debt-active-panel"><div class="panel-head"><div><h3>💳 Công nợ phải thu</h3><span>Giao diện gọn: gom thông tin khách và sản phẩm vào một dòng để dễ thu tiền.</span></div><button class="btn primary debt-big-btn" onclick="openReceiptForm()">+ Tạo phiếu thu</button></div><div class="toolbar"><input class="search" id="debtSearch" placeholder="Tìm mã phiếu / tên khách / SĐT / mã KH / model" oninput="renderDebts()" /><button class="btn ghost" onclick="clearDebtSearch()">Xóa tìm</button><span id="debtSearchCount" class="muted-small"></span></div><div class="table-scroll"><table class="debt-table compact-table"><thead><tr><th>Phiếu</th><th>Khách hàng</th><th>Sản phẩm</th><th>Tổng mua</th><th>Đã thu</th><th>Còn nợ</th><th>Ngày bán</th><th>Quá hạn</th><th>Thao tác</th></tr></thead><tbody id="debtTable"></tbody></table></div></div>
         <div class="panel receipt-panel"><div class="panel-head"><div><h3>🧾 Phiếu thu</h3><span>Tạo, sửa, in phiếu thu. Sau khi thu đủ, công nợ tự chuyển xuống mục đã tất toán bên dưới.</span></div><div><button class="btn ghost" onclick="resetReceiptForm()">Nhập lại</button><button class="btn primary" onclick="saveReceipt()">Lưu phiếu thu</button></div></div><div class="grid form-grid receipt-form"><div><label>Khách hàng</label><select id="receiptCustomer"></select></div><div><label>Số tiền thu</label><input id="receiptAmount" type="number" /></div><div><label>Ngày thu</label><input id="receiptDate" type="date" /></div><div><label>Ghi chú</label><input id="receiptNote" placeholder="VD: Thu đủ đơn BH..." /></div></div><div class="toolbar"><input class="search" id="receiptSearch" placeholder="Tìm phiếu thu theo mã PT / tên khách / SĐT / mã KH / ghi chú" oninput="renderReceipts()" /><button class="btn ghost" onclick="clearReceiptSearch()">Xóa tìm</button><span id="receiptSearchCount" class="muted-small"></span></div><table><thead><tr><th>Mã PT</th><th>Ngày</th><th>Mã KH</th><th>Khách</th><th>Số tiền</th><th>Ghi chú</th><th>Hành động</th></tr></thead><tbody id="receiptTable"></tbody></table></div>
         <div class="panel settled-panel"><div class="panel-head"><div><h3>✅ Công nợ đã tất toán</h3><span>Đưa xuống dưới phiếu thu để không lẫn với danh sách cần thu tiền.</span></div></div><table><thead><tr><th>STT</th><th>Phiếu</th><th>Khách hàng</th><th>SĐT</th><th>Model</th><th>Tổng tiền</th><th>Đã thu</th><th>Ngày tất toán</th></tr></thead><tbody id="settledDebtTable"></tbody></table></div>
       </section>
@@ -594,39 +594,39 @@
             <div><label>Đến ngày</label><input id="reportTo" type="date" onchange="document.getElementById('reportPeriod').value='custom';renderReports()"></div>
             <div><label>Tìm model/sản phẩm</label><input id="reportProductSearch" placeholder="VD: F07, S01, 569..." oninput="renderReports()"></div>
           </div>
-          <div class="toolbar report-tabs"><b>📊 Báo cáo:</b><button class="btn ghost">Doanh thu</button><button class="btn ghost">Lợi nhuận</button><button class="btn ghost">Tồn kho</button><button class="btn ghost" onclick="showPage('debts')">Công nợ</button><button class="btn ghost" onclick="showPage('commissions')">Hoa hồng</button><button class="btn ghost" onclick="showPage('warranty')">Bảo hành</button></div><div id="reportBox" class="report-grid"></div>
+          <div class="toolbar report-tabs"><b>📊 Báo cáo:</b><button class="btn ghost active" id="reportTabRevenue" onclick="setReportTab('revenue')">Doanh thu</button><button class="btn ghost" id="reportTabProfit" onclick="setReportTab('profit')">Lợi nhuận</button><button class="btn ghost" onclick="showPage('inventory')">Tồn kho</button><button class="btn ghost" onclick="showPage('debts')">Công nợ</button><button class="btn ghost" onclick="showPage('commissions')">Hoa hồng</button><button class="btn ghost" onclick="showPage('warranty')">Bảo hành</button></div><div id="reportBox" class="report-grid report-section report-section-revenue report-section-profit"></div>
         </div>
-        <div class="card view-cost">
+        <div class="card view-cost report-section report-section-profit">
           <div class="section-title"><h3>Phân tích lợi nhuận chi tiết</h3><small>Hiển thị rõ: doanh thu - giá vốn - hoa hồng - kỹ thuật - chi phí</small></div>
           <table><thead><tr><th>Chỉ tiêu</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="reportProfitBreakdownTable"></tbody></table>
         </div>
 
-        <div class="panel wide">
+        <div class="panel wide report-section report-section-revenue">
           <div class="panel-head"><h3>🔐 Tổng sản phẩm bán ra</h3><span>Tìm theo model hoặc tên sản phẩm</span></div>
           <table><thead><tr><th>Model</th><th>Tên sản phẩm</th><th>Số lượng</th><th>Doanh thu</th><th class="view-cost">Giá vốn</th><th class="view-cost">Lãi gộp SP</th></tr></thead><tbody id="reportProductTable"></tbody></table>
         </div>
 
-        <div class="panel wide">
+        <div class="panel wide report-section report-section-revenue">
           <div class="panel-head"><h3>📊 Doanh thu theo thời gian</h3><span>Ngày / tuần / tháng / năm</span></div>
           <table><thead><tr><th>Mốc thời gian</th><th>Số đơn</th><th>Số lượng SP</th><th>Doanh thu</th><th>Phụ thu</th><th>Đã thu</th><th>Còn nợ</th><th class="view-cost">Hoa hồng Sale</th><th class="view-cost">Công + xăng KT</th><th class="view-cost">Lợi nhuận đơn</th></tr></thead><tbody id="reportRevenueTable"></tbody></table>
         </div>
 
 
-        <div class="panel wide">
+        <div class="panel wide report-section report-section-revenue">
           <div class="panel-head"><h3>↩️ Danh sách hàng bán bị trả lại</h3><span>Theo dõi phiếu TH, số lượng trả, nhập lại kho và hướng xử lý tiền dư.</span></div>
           <div id="reportReturnSummary" class="report-grid"></div>
           <table><thead><tr><th>Ngày</th><th>Phiếu TH</th><th>Đơn bán</th><th>Khách hàng</th><th>Kho nhập lại</th><th>Model</th><th>SL trả</th><th>Giá trị</th><th>Xử lý tiền</th><th>Ghi chú</th></tr></thead><tbody id="reportReturnTable"></tbody></table>
         </div>
-        <div class="panel wide view-cost">
+        <div class="panel wide view-cost report-section report-section-profit">
           <div class="panel-head"><h3>📒 Báo cáo chi phí theo danh mục</h3><span>Điện, nước, internet, thuê nhà, vận chuyển, lương cố định, khác</span></div>
           <table><thead><tr><th>Loại chi phí</th><th>Số phiếu</th><th>Tổng tiền</th></tr></thead><tbody id="reportExpenseCategoryTable"></tbody></table>
         </div>
 
-        <div class="panel wide view-cost">
+        <div class="panel wide view-cost report-section report-section-profit">
           <div class="panel-head"><h3>🧾 Chi tiết chi phí vận hành trong kỳ</h3></div>
           <table><thead><tr><th>Ngày</th><th>Loại chi phí</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="reportExpenseDetailTable"></tbody></table>
         </div>
-        <div class="panel wide salary-only">
+        <div class="panel wide salary-only report-section report-section-profit">
           <div class="panel-head"><h3>👤 Chi tiết lương trong kỳ</h3></div>
           <table><thead><tr><th>Ngày</th><th>Nhân viên</th><th>Lương CB</th><th>Phụ cấp</th><th>Thưởng</th><th>Khấu trừ</th><th>Tổng lương</th><th>Ghi chú</th></tr></thead><tbody id="reportSalaryDetailTable"></tbody></table>
         </div>

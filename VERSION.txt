@@ -1,1 +1,7 @@
-Similock ERP stable optimized + employee income/debt/report upgrade - 2026-06-27
+V52 - UX FIX CÔNG NỢ / BẢNG GIÁ / REPORT TABS
+Cập nhật: 2026-06-27
+
+- Tối ưu giao diện Công nợ: bảng gọn, lọc Đang nợ/Đã tất toán/Tất cả rõ hơn.
+- Tối ưu Bảng giá: item sản phẩm dạng chip nhỏ, dễ chọn nhiều model hơn.
+- Sửa tab Báo cáo: Doanh thu/Lợi nhuận chạy được; Tồn kho/Công nợ/Hoa hồng/Bảo hành chuyển đúng module.
+- Bổ sung responsive cho bảng công nợ và bảng giá.

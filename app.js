@@ -929,7 +929,7 @@ function applyPermissions(){
   document.querySelectorAll('.manage-salary').forEach(x=>x.classList.toggle('hidden',!has('manageSalary')));
 }
 document.querySelectorAll('#menu .menu-toggle').forEach(btn=>btn.onclick=()=>btn.closest('.menu-group').classList.toggle('open'));document.querySelectorAll('#menu button[data-page]').forEach(btn=>btn.onclick=()=>showPage(btn.dataset.page));
-function showPage(id){if(!has(id))return alert('Tài khoản chưa được phân quyền');document.querySelectorAll('#menu button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('#menu .menu-group').forEach(g=>g.classList.toggle('active-group',[...g.querySelectorAll('button[data-page]')].some(b=>b.dataset.page===id)));const activeBtn=document.querySelector(`#menu button[data-page="${id}"]`);if(activeBtn)activeBtn.closest('.menu-group')?.classList.add('open');document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));$('pageTitle').textContent=btnTitle(id);$('pageSub').textContent='Similock Đà Nẵng - Quản lý bán hàng, kho, công nợ, bảo hành'}
+function showPage(id){if(!has(id))return alert('Tài khoản chưa được phân quyền');document.querySelectorAll('#menu button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('#menu .menu-group').forEach(g=>g.classList.toggle('active-group',[...g.querySelectorAll('button[data-page]')].some(b=>b.dataset.page===id)));const activeBtn=document.querySelector(`#menu button[data-page="${id}"]`);if(activeBtn)activeBtn.closest('.menu-group')?.classList.add('open');document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));$('pageTitle').textContent=btnTitle(id);$('pageSub').textContent='Similock Đà Nẵng - Quản lý bán hàng, kho, công nợ, bảo hành';if(id==='reports')setTimeout(()=>window.setReportTab?.(currentReportTab||'revenue'),0)}
 function btnTitle(id){return ({dashboard:'Dashboard điều hành',sales:'Bán hàng',commissions:'Hoa hồng',expenses:'Chi phí vận hành',salaries:'Lương nhân viên',debts:'Công nợ',inventory:'Kho hàng',stockbook:'Sổ kho',warranty:'Bảo hành',customers:'Khách hàng',products:'Sản phẩm',prices:'Bảng giá',staff:'Nhân viên',reports:'Báo cáo',permissions:'Phân quyền',system:'Hệ thống',audit:'Nhật ký thao tác'}[id]||id)}
 
 function renderAll(){
@@ -998,7 +998,7 @@ function renderProductPicker(boxId, searchId, hintId, selectedCodes=[]){
   const old=new Set([...checkedCodesFromBox(boxId), ...selectedCodes.filter(Boolean)]);
   const q=String($(searchId)?.value||'').trim().toLowerCase();
   const rows=data.products.filter(p=>!q || `${p.code} ${p.name||''} ${p.category||''}`.toLowerCase().includes(q));
-  box.innerHTML=rows.length?rows.map(p=>`<label><input type="checkbox" value="${p.code}" ${old.has(p.code)?'checked':''} onchange="updateProductPickerHint('${boxId}','${hintId}')"><span>${p.code}<small>${p.name||''}</small></span></label>`).join(''):`<div class="empty">Không tìm thấy model phù hợp</div>`;
+  box.innerHTML=rows.length?rows.map(p=>`<label class="model-chip"><input type="checkbox" value="${p.code}" ${old.has(p.code)?'checked':''} onchange="updateProductPickerHint('${boxId}','${hintId}')"><span><b>${p.code}</b><small>${p.name||''}</small>${p.category?`<em>${p.category}</em>`:''}</span></label>`).join(''):`<div class="empty">Không tìm thấy model phù hợp</div>`;
   updateProductPickerHint(boxId,hintId);
 }
 function updateProductPickerHint(boxId,hintId){
@@ -2405,19 +2405,30 @@ function renderDebts(){
   const allRows=calcDebtRows().sort((a,b)=>String(b.saleCode||'').localeCompare(String(a.saleCode||'')));
   const filter=debtCurrentFilter();
   const visibleBase=filter==='settled'?settledAll:(filter==='all'?allRows:activeAll);
-  const active=visibleBase.filter(d=>!q||debtRowText(d).includes(q));
+  const rows=visibleBase.filter(d=>!q||debtRowText(d).includes(q));
   const settled=settledAll.filter(d=>!q||debtRowText(d).includes(q));
   const overdue=activeAll.filter(d=>debtOverdueDays(d)>0);
   if($('debtActiveCount'))$('debtActiveCount').textContent=activeAll.length;
   if($('debtActiveTotal'))$('debtActiveTotal').textContent=money(activeAll.reduce((a,d)=>a+d.debt,0));
   if($('debtSettledCount'))$('debtSettledCount').textContent=settledAll.length;
   if($('debtOverdueTotal'))$('debtOverdueTotal').textContent=money(overdue.reduce((a,d)=>a+d.debt,0));
-  if($('debtStatsBox'))$('debtStatsBox').innerHTML=`<div>Tổng công nợ: <b>${money(activeAll.reduce((a,d)=>a+d.debt,0))}</b></div><div>Đã tất toán: <b>${money(settledAll.reduce((a,d)=>a+d.total,0))}</b></div><div>Quá hạn: <b>${money(overdue.reduce((a,d)=>a+d.debt,0))}</b></div>`;
-  if($('debtSearchCount'))$('debtSearchCount').textContent=`Hiển thị ${active.length}/${visibleBase.length} dòng công nợ`;
-  $('debtTable').innerHTML=active.map(d=>{const ci=customerInfo(d.customer);const productText=debtGroupProducts(d)||'-';const od=debtOverdueDays(d);return `<tr><td><b>${d.saleCode||''}</b></td><td><b>${ci.code}</b></td><td><b>${ci.name}</b><br><small>${ci.phone||''}</small></td><td><small>${ci.address||''}</small></td><td><small>${productText}</small></td><td>${money(d.total)}</td><td>${money(d.paid)}</td><td>${debtSaleDate(d)||''}</td><td><b class="${d.debt>0?'text-danger debt-money':''}">${money(d.debt)}</b></td><td>${od?`<span class="badge red">${od} ngày</span>`:'-'}</td><td>${d.debt>0?`<button class="btn primary debt-action" onclick="receiptFor('${encodeURIComponent(d.debtKey)}')">Thu tiền</button>`:'<span class="badge green">Đã tất toán</span>'}</td></tr>`}).join('')||'<tr><td colspan="11">Không tìm thấy công nợ phù hợp</td></tr>';
-  if($('settledDebtTable'))$('settledDebtTable').innerHTML=settled.map((d,idx)=>{const ci=customerInfo(d.customer);const productText=debtGroupProducts(d)||'-';return `<tr class="settled-row"><td>${idx+1}</td><td>${d.saleCode||''}</td><td><b>${ci.name}</b></td><td>${ci.phone||''}</td><td><small>${productText}</small></td><td>${money(d.total)}</td><td>${money(d.paid)}</td><td>${debtSettledDate(d)}</td></tr>`}).join('')||'<tr><td colspan="8">Không tìm thấy công nợ đã tất toán phù hợp</td></tr>';
+  if($('debtStatsBox'))$('debtStatsBox').innerHTML=`<div><span>Tổng công nợ</span><b>${money(activeAll.reduce((a,d)=>a+d.debt,0))}</b></div><div><span>Đã tất toán</span><b>${money(settledAll.reduce((a,d)=>a+d.total,0))}</b></div><div><span>Quá hạn</span><b>${money(overdue.reduce((a,d)=>a+d.debt,0))}</b></div>`;
+  document.querySelectorAll('.debt-active-panel').forEach(el=>el.style.display=(filter==='settled')?'none':'');
+  document.querySelectorAll('.settled-panel').forEach(el=>el.style.display=(filter==='active')?'none':'');
+  if($('debtSearchCount'))$('debtSearchCount').textContent=`Hiển thị ${rows.length}/${visibleBase.length} dòng`;
+  $('debtTable').innerHTML=rows.map(d=>{const ci=customerInfo(d.customer);const productText=debtGroupProducts(d)||'-';const od=debtOverdueDays(d);return `<tr>
+    <td><b>${d.saleCode||''}</b><small>${ci.code||''}</small></td>
+    <td><b>${ci.name}</b><small>${ci.phone||''}${ci.address?' • '+ci.address:''}</small></td>
+    <td class="debt-products"><small>${productText}</small></td>
+    <td>${money(d.total)}</td>
+    <td>${money(d.paid)}</td>
+    <td><b class="${d.debt>0?'text-danger debt-money':''}">${money(d.debt)}</b></td>
+    <td>${debtSaleDate(d)||''}</td>
+    <td>${od?`<span class="badge red">${od} ngày</span>`:'-'}</td>
+    <td>${d.debt>0?`<button class="btn primary debt-action" onclick="receiptFor('${encodeURIComponent(d.debtKey)}')">Thu tiền</button>`:'<span class="badge green">Đã tất toán</span>'}</td>
+  </tr>`}).join('')||'<tr><td colspan="9">Không tìm thấy công nợ phù hợp</td></tr>';
+  if($('settledDebtTable'))$('settledDebtTable').innerHTML=settled.map((d,idx)=>{const ci=customerInfo(d.customer);const productText=debtGroupProducts(d)||'-';return `<tr class="settled-row"><td>${idx+1}</td><td>${d.saleCode||''}</td><td><b>${ci.name}</b><small>${ci.code||''}</small></td><td>${ci.phone||''}</td><td><small>${productText}</small></td><td>${money(d.total)}</td><td>${money(d.paid)}</td><td>${debtSettledDate(d)}</td></tr>`}).join('')||'<tr><td colspan="8">Không tìm thấy công nợ đã tất toán phù hợp</td></tr>';
 }
-
 window.clearDebtSearch=()=>{if($('debtSearch'))$('debtSearch').value='';renderDebts();}
 window.resetReceiptForm=()=>{editingReceipt=null;fillReceiptCustomerOptions();$('receiptCustomer').value='';$('receiptAmount').value='';$('receiptDate').value=today();$('receiptNote').value=''}
 window.receiptFor=keyEnc=>{const key=decodeURIComponent(keyEnc||'');let d=calcDebts().find(x=>x.debtKey===key)||calcDebtRows().find(x=>x.debtKey===key);if(d&&d.debt<=0)return alert('Phiếu này đã thu đủ tiền. Admin có thể sửa phiếu thu trong danh sách Phiếu thu nếu nhập sai.');resetReceiptForm();if(d){$('receiptCustomer').value='debtkey:'+encodeURIComponent(d.debtKey);if(d.debt>0)$('receiptAmount').value=d.debt;}$('receiptDate').value=today();showPage('debts');setTimeout(()=>$('receiptAmount')?.focus(),0)};window.openReceiptForm=()=>{resetReceiptForm();showPage('debts');setTimeout(()=>$('receiptCustomer')?.focus(),0)}
@@ -2922,6 +2933,18 @@ function groupKeyByPeriod(date,period){
   if(period==='week')return weekKey(d);
   return d;
 }
+
+let currentReportTab='revenue';
+window.setReportTab=(tab='revenue')=>{
+  currentReportTab=tab;
+  document.querySelectorAll('.report-tabs button[id^="reportTab"]').forEach(b=>b.classList.remove('active'));
+  const btn=$(`reportTab${tab==='profit'?'Profit':'Revenue'}`); if(btn)btn.classList.add('active');
+  document.querySelectorAll('#reports .report-section').forEach(el=>{
+    const show=el.classList.contains(`report-section-${tab}`);
+    el.style.display=show?'':'none';
+  });
+  renderReports();
+};
 function renderReports(){
   if(!$('reportBox'))return;
   if($('reportFrom')&&!$('reportFrom').value)setReportQuickRange();
