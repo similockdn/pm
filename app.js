@@ -1392,27 +1392,64 @@ function groupPrices(list){
   list.forEach(p=>{const k=priceGroupKeyOf(p); if(!m.has(k))m.set(k,{key:k,listName:p.listName||'',type:p.type||'',validFrom:p.validFrom||'',validTo:p.validTo||'',active:String(p.active)!=='false',note:p.note||'',items:[]}); m.get(k).items.push(p);});
   return [...m.values()].sort((a,b)=>String(a.listName).localeCompare(String(b.listName))||String(b.validFrom||'').localeCompare(String(a.validFrom||'')));
 }
+
 window.newPriceList=()=>{
   ['priceId','priceGroupKey','priceProduct','priceListName','priceFrom','priceTo','priceNote'].forEach(i=>{if($(i))$(i).value=''});
   if($('priceType'))$('priceType').value='Khách lẻ'; if($('priceActive'))$('priceActive').value='true';
-  clearPriceProducts(); if($('priceDraftRows'))$('priceDraftRows').innerHTML='<tr><td colspan="4">Chưa có sản phẩm trong bảng giá</td></tr>';
+  clearPriceProducts();
+  if($('priceDraftRows'))$('priceDraftRows').innerHTML='<tr><td colspan="8" class="empty-row">Chưa có sản phẩm trong bảng giá</td></tr>';
+  updatePriceDraftSummary();
+}
+function priceVatFromRow(tr){return +(tr?.querySelector('.price-vat')?.value||8)||0}
+function priceBaseFromRow(tr){return +(tr?.querySelector('.price-base')?.value||0)||0}
+function priceGrossFromRow(tr){return Math.round(priceBaseFromRow(tr)*(1+priceVatFromRow(tr)/100))}
+window.updatePriceDraftSummary=()=>{
+  const rows=[...($('priceDraftRows')?.querySelectorAll('tr[data-code]')||[])];
+  let base=0, vat=0, gross=0;
+  rows.forEach((tr,i)=>{
+    const b=priceBaseFromRow(tr), g=priceGrossFromRow(tr); base+=b; gross+=g; vat+=g-b;
+    const stt=tr.querySelector('.price-stt'); if(stt)stt.textContent=i+1;
+    const grossEl=tr.querySelector('.price-gross'); if(grossEl)grossEl.textContent=money(g);
+  });
+  if($('priceDraftCount'))$('priceDraftCount').textContent=rows.length;
+  if($('priceDraftBaseTotal'))$('priceDraftBaseTotal').textContent=money(base);
+  if($('priceDraftVatTotal'))$('priceDraftVatTotal').textContent=money(vat);
+  if($('priceDraftGrossTotal'))$('priceDraftGrossTotal').textContent=money(gross);
+}
+function removePriceDraftRow(btn){
+  btn.closest('tr')?.remove();
+  if(!document.querySelector('#priceDraftRows tr[data-code]'))document.getElementById('priceDraftRows').innerHTML='<tr><td colspan="8" class="empty-row">Chưa có sản phẩm trong bảng giá</td></tr>';
+  updatePriceDraftSummary();
+}
+window.removePriceDraftRow=removePriceDraftRow;
+function priceDraftRowHtml(code, grossValue){
+  const prod=data.products.find(p=>p.code===code)||{};
+  const vat=8;
+  const gross=+(grossValue||prod.price||0)||0;
+  const base=Math.round(gross/(1+vat/100));
+  return `<tr data-code="${code}">
+    <td class="price-stt"></td>
+    <td><b>${code}</b></td>
+    <td>${prod.name||''}</td>
+    <td>${prod.unit||'Bộ'}</td>
+    <td><input class="price-base" type="number" value="${base||''}" placeholder="Giá chưa VAT" oninput="updatePriceDraftSummary()"></td>
+    <td><select class="price-vat" onchange="updatePriceDraftSummary()"><option value="0">0</option><option value="8" selected>8</option><option value="10">10</option></select></td>
+    <td><b class="price-gross">${money(gross)}</b></td>
+    <td><button class="btn danger tiny" onclick="removePriceDraftRow(this)">Xóa</button></td>
+  </tr>`;
 }
 window.createPriceDraftRows=()=>{
   const codes=selectedPriceCodes();
   if(!codes.length)return alert('Chọn ít nhất 1 model trước');
   const tb=$('priceDraftRows'); if(!tb)return;
-  const existing=new Map([...tb.querySelectorAll('tr[data-code]')].map(tr=>[tr.dataset.code,tr.querySelector('input')?.value||'']));
+  const existing=new Map([...tb.querySelectorAll('tr[data-code]')].map(tr=>[tr.dataset.code,priceGrossFromRow(tr)]));
   const all=[...new Set([...existing.keys(),...codes])];
-  tb.innerHTML=all.map(code=>{
-    const prod=data.products.find(p=>p.code===code)||{};
-    const old=existing.get(code);
-    const val=old!==undefined?old:(prod.price||'');
-    return `<tr data-code="${code}"><td><b>${code}</b></td><td>${prod.name||''}</td><td><input type="number" value="${val}" placeholder="Nhập giá bán"></td><td><button class="btn danger" onclick="this.closest('tr').remove();if(!document.querySelector('#priceDraftRows tr[data-code]'))document.getElementById('priceDraftRows').innerHTML='<tr><td colspan=\'4\'>Chưa có sản phẩm trong bảng giá</td></tr>'">X</button></td></tr>`;
-  }).join('');
+  tb.innerHTML=all.map(code=>priceDraftRowHtml(code, existing.get(code))).join('');
+  updatePriceDraftSummary();
 }
 function priceDraftItems(){
   const rows=[...($('priceDraftRows')?.querySelectorAll('tr[data-code]')||[])];
-  return rows.map(tr=>({code:tr.dataset.code,price:+(tr.querySelector('input')?.value||0)||0})).filter(x=>x.code);
+  return rows.map(tr=>({code:tr.dataset.code,price:priceGrossFromRow(tr),vat:priceVatFromRow(tr),priceBeforeVat:priceBaseFromRow(tr)})).filter(x=>x.code);
 }
 window.savePrice=async()=>{
   let items=priceDraftItems();
@@ -1427,8 +1464,9 @@ window.savePrice=async()=>{
   for(const old of oldRows){ if(!items.some(it=>it.code===old.code)) await deleteDoc(doc(db,'prices',old.id)); }
   for(const it of items){
     const old=oldRows.find(x=>x.code===it.code);
-    if(old) await updateDoc(doc(db,'prices',old.id),{...base,code:it.code,price:it.price});
-    else await addDoc(col('prices'),{...base,code:it.code,price:it.price,createdAt:serverTimestamp()});
+    const rowData={...base,code:it.code,price:it.price,vat:it.vat,priceBeforeVat:it.priceBeforeVat};
+    if(old) await updateDoc(doc(db,'prices',old.id),rowData);
+    else await addDoc(col('prices'),{...rowData,createdAt:serverTimestamp()});
   }
   await logAction(oldKey?'Sửa bảng giá':'Thêm bảng giá',`${base.listName} - ${items.length} model`);
   newPriceList(); await loadAll();
@@ -1437,9 +1475,9 @@ function renderPrices(){
   const q=String($('priceSearch')?.value||'').trim().toLowerCase();
   const tb=$('priceTable'); if(!tb)return;
   let groups=groupPrices(data.prices).filter(g=>{const productText=g.items.map(p=>{const prod=data.products.find(x=>x.code===p.code)||{};return `${p.code} ${prod.name||''} ${p.price}`}).join(' ');const hay=[g.listName,g.type,g.validFrom,g.validTo,g.note,productText].join(' ').toLowerCase();return !q||hay.includes(q)});
-  tb.innerHTML=groups.map(g=>{let st=priceStatus(g);let models=g.items.map(x=>x.code).join(', ');return`<tr><td><b>${g.listName||''}</b><small>${models}</small><span class="badge ${st[1]}">${st[0]}</span></td><td>${g.type}</td><td><b>${g.items.length}</b></td><td><button class="btn ghost" onclick="editPriceGroup('${encodeURIComponent(g.key)}')">Mở</button><button class="btn danger" onclick="deletePriceGroup('${encodeURIComponent(g.key)}')">Xóa</button></td></tr>`}).join('')||'<tr><td colspan="4">Không tìm thấy bảng giá phù hợp</td></tr>';
+  tb.innerHTML=groups.map(g=>{let st=priceStatus(g);let models=g.items.slice(0,8).map(x=>x.code).join(', ')+(g.items.length>8?'...':'');return`<tr><td><b>${g.listName||''}</b><small>Hiệu lực: ${g.validFrom||'--'} → ${g.validTo||'--'}<br>${models}</small><span class="badge ${st[1]}">${st[0]}</span></td><td>${g.type}</td><td><b>${g.items.length}</b></td><td><button class="btn ghost" onclick="editPriceGroup('${encodeURIComponent(g.key)}')">Mở</button><button class="btn danger" onclick="deletePriceGroup('${encodeURIComponent(g.key)}')">Xóa</button></td></tr>`}).join('')||'<tr><td colspan="4">Không tìm thấy bảng giá phù hợp</td></tr>';
 }
-window.editPriceGroup=(keyEnc)=>{const key=decodeURIComponent(keyEnc);const rows=data.prices.filter(p=>priceGroupKeyOf(p)===key);if(!rows.length)return alert('Không tìm thấy bảng giá');const p=rows[0];$('priceGroupKey').value=key;$('priceId').value='';$('priceProduct').value='';if($('priceListName'))$('priceListName').value=p.listName||'';$('priceType').value=p.type;$('priceFrom').value=p.validFrom||'';$('priceTo').value=p.validTo||'';$('priceActive').value=String(p.active)!=='false'?'true':'false';$('priceNote').value=p.note||'';renderPriceProductPicker();const codes=rows.map(x=>x.code);const box=$('priceProductPicker');if(box)box.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=codes.includes(x.value));updateProductPickerHint('priceProductPicker','priceSelectedHint');if($('priceDraftRows')){$('priceDraftRows').innerHTML=rows.map(p=>`<tr data-code="${p.code}"><td><b>${p.code}</b></td><td>${(data.products.find(x=>x.code===p.code)||{}).name||''}</td><td><input type="number" value="${p.price||0}"></td><td><button class="btn danger" onclick="this.closest('tr').remove();if(!document.querySelector('#priceDraftRows tr[data-code]'))document.getElementById('priceDraftRows').innerHTML='<tr><td colspan=\'4\'>Chưa có sản phẩm trong bảng giá</td></tr>'">X</button></td></tr>`).join('');}showPage('prices')}
+window.editPriceGroup=(keyEnc)=>{const key=decodeURIComponent(keyEnc);const rows=data.prices.filter(p=>priceGroupKeyOf(p)===key);if(!rows.length)return alert('Không tìm thấy bảng giá');const p=rows[0];$('priceGroupKey').value=key;$('priceId').value='';$('priceProduct').value='';if($('priceListName'))$('priceListName').value=p.listName||'';$('priceType').value=p.type;$('priceFrom').value=p.validFrom||'';$('priceTo').value=p.validTo||'';$('priceActive').value=String(p.active)!=='false'?'true':'false';$('priceNote').value=p.note||'';renderPriceProductPicker();const codes=rows.map(x=>x.code);const box=$('priceProductPicker');if(box)box.querySelectorAll('input[type="checkbox"]').forEach(x=>x.checked=codes.includes(x.value));updateProductPickerHint('priceProductPicker','priceSelectedHint');if($('priceDraftRows')){$('priceDraftRows').innerHTML=rows.map(p=>priceDraftRowHtml(p.code,p.price||0)).join('');updatePriceDraftSummary();}showPage('prices')}
 window.editPrice=id=>{let p=data.prices.find(x=>x.id===id); if(p) editPriceGroup(encodeURIComponent(priceGroupKeyOf(p)));}
 window.deletePriceGroup=async(keyEnc)=>{const key=decodeURIComponent(keyEnc);const rows=data.prices.filter(p=>priceGroupKeyOf(p)===key);if(!rows.length)return;if(!confirm(`Xóa toàn bộ bảng giá này (${rows.length} model)?`))return;for(const r of rows) await deleteDoc(doc(db,'prices',r.id));await logAction('Xóa bảng giá',rows[0].listName||key);await loadAll();}
 

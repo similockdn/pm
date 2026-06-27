@@ -1331,3 +1331,34 @@ td:first-child,th:first-child,td:last-child,th:last-child{border-radius:0!import
   .price-page-v53 .slip-form-grid .span2{grid-column:auto}
   .price-page-v53 .price-sheet-tabs{flex-direction:column}
 }
+
+/* V54 - Bảng giá kiểu phiếu bán hàng thực tế */
+.price-page-v53 .price-slip-panel{box-shadow:0 18px 45px rgba(15,23,42,.06)}
+.price-page-v53 .price-slip-toolbar{background:linear-gradient(180deg,#fff,#f8fbff);border-left:4px solid #2438d8}
+.price-page-v53 .cost-price-panel .price-slip-toolbar{border-left-color:#dc2626}
+.price-page-v53 .price-slip-body{grid-template-columns:340px minmax(0,1fr)!important}
+.price-page-v53 .price-product-and-detail{grid-template-columns:320px minmax(0,1fr)!important}
+.price-page-v53 .price-product-grid{grid-template-columns:1fr!important;max-height:520px!important;background:#fff!important}
+.price-page-v53 .price-product-grid label.model-chip{min-height:44px!important;display:grid!important;grid-template-columns:auto 64px minmax(0,1fr);align-items:center;gap:8px;padding:6px 8px!important}
+.price-page-v53 .price-product-grid label.model-chip b{font-size:12.5px;max-width:64px;color:#1d4ed8}
+.price-page-v53 .price-product-grid label.model-chip small{font-size:11px;max-height:17px;white-space:nowrap;text-overflow:ellipsis}
+.price-page-v53 .price-product-grid label.model-chip em{display:none}
+.price-page-v53 .slip-draft-box{max-height:560px;border-radius:14px}
+.price-page-v53 .slip-draft-box table.price-slip-table{min-width:980px;width:100%;border-collapse:separate;border-spacing:0}
+.price-page-v53 .price-slip-table th{height:44px;text-transform:none;font-size:12.5px;background:#eef2ff!important;border-bottom:1px solid #dbe4f0}
+.price-page-v53 .price-slip-table td{height:44px;vertical-align:middle;background:#fff}
+.price-page-v53 .price-slip-table tr:hover td{background:#f8fbff}
+.price-page-v53 .price-slip-table input,.price-page-v53 .price-slip-table select{height:34px;border-radius:8px;font-size:13px;padding:6px 8px}
+.price-page-v53 .price-slip-table .price-base{text-align:right;font-weight:800;color:#0f172a}
+.price-page-v53 .price-slip-table .price-gross{display:block;text-align:right;color:#172554;font-size:14px}
+.price-page-v53 .btn.tiny{padding:6px 8px;font-size:11px;border-radius:8px}
+.price-page-v53 .empty-row{text-align:center;color:#64748b;font-weight:700;padding:24px!important}
+.price-total-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:0;margin-top:12px;border:1px solid #dbeafe;background:linear-gradient(180deg,#eff6ff,#fff);border-radius:14px;overflow:hidden}
+.price-total-strip>div{padding:13px 14px;text-align:center;border-right:1px solid #dbeafe}
+.price-total-strip>div:last-child{border-right:0}
+.price-total-strip small{display:block;color:#475569;font-weight:800;margin-bottom:5px}
+.price-total-strip b{font-size:18px;color:#0f172a}
+.price-total-strip .grand{background:linear-gradient(135deg,#2438d8,#1d4ed8)}
+.price-total-strip .grand small,.price-total-strip .grand b{color:#fff}
+.price-page-v53 .price-list-table small{display:block;margin-top:5px;color:#64748b;font-weight:700;line-height:1.35}
+@media(max-width:1200px){.price-page-v53 .price-slip-body,.price-page-v53 .price-product-and-detail{grid-template-columns:1fr!important}.price-total-strip{grid-template-columns:1fr 1fr}}
