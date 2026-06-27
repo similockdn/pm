@@ -1256,3 +1256,78 @@ td:first-child,th:first-child,td:last-child,th:last-child{border-radius:0!import
   #prices .kiot-price-list{position:static;}
   .debt-stats-box{grid-template-columns:1fr;}
 }
+
+/* V53 - Thiết kế lại Bảng giá dạng phiếu bán hàng, tách 2 tab Giá bán / Giá vốn */
+.price-page-v53 .price-sheet-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px;
+  background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px 18px;box-shadow:0 10px 24px rgba(15,23,42,.04);
+}
+.price-page-v53 .price-sheet-head h3{margin:0;color:#0f172a;font-size:24px;line-height:1.1}
+.price-page-v53 .price-sheet-head span{display:block;margin-top:5px;color:#64748b;font-weight:700;font-size:13px}
+.price-page-v53 .price-head-actions,.price-page-v53 .price-slip-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.price-page-v53 .price-sheet-tabs{display:flex!important;gap:10px;margin:0 0 14px 0;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:16px;padding:8px}
+.price-page-v53 .price-tab{flex:1;border-radius:12px;padding:13px 16px;text-align:center;box-shadow:none;border-color:transparent;background:transparent}
+.price-page-v53 .price-tab b{font-size:15px;margin:0;color:#334155}
+.price-page-v53 .price-tab span{font-size:12px;font-weight:700;color:#64748b}
+.price-page-v53 .price-tab.active{background:#2438d8;border-color:#2438d8;box-shadow:0 10px 22px rgba(36,56,216,.18)}
+.price-page-v53 .price-tab.active b,.price-page-v53 .price-tab.active span{color:#fff}
+.price-page-v53 .price-tab.danger.active{background:#dc2626;border-color:#dc2626;box-shadow:0 10px 22px rgba(220,38,38,.16)}
+.price-page-v53 .price-slip-panel{padding:0!important;overflow:hidden;border-radius:18px;border:1px solid #dbe4f0;background:#fff}
+.price-page-v53 .price-slip-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:16px 18px;border-bottom:1px solid #e2e8f0;background:linear-gradient(180deg,#ffffff,#f8fbff)}
+.price-page-v53 .price-slip-toolbar h3{margin:0;color:#0f172a;font-size:21px}
+.price-page-v53 .price-slip-toolbar small{display:block;color:#64748b;font-weight:700;margin-top:4px}
+.price-page-v53 .cost-toolbar{background:linear-gradient(180deg,#fff,#fff7ed)}
+.price-page-v53 .price-slip-info{padding:16px 18px;border-bottom:1px solid #e2e8f0;background:#fbfdff}
+.price-page-v53 .price-slip-info.cost-info{background:#fffaf5}
+.price-page-v53 .slip-form-grid{grid-template-columns:2fr 1.15fr 1fr 1fr!important;gap:12px!important;background:transparent!important;border:0!important;margin:0!important;padding:0!important}
+.price-page-v53 .slip-form-grid .span2{grid-column:span 2}
+.price-page-v53 .slip-form-grid label{font-size:12px;text-transform:none;color:#334155;margin-bottom:5px}
+.price-page-v53 .slip-form-grid input,.price-page-v53 .slip-form-grid select{height:42px;border-radius:10px;background:#fff}
+.price-page-v53 .price-slip-body{display:grid;grid-template-columns:360px minmax(0,1fr);gap:14px;padding:14px 18px 18px;background:#fff}
+.price-page-v53 .price-saved-list,.price-page-v53 .price-product-picker-panel,.price-page-v53 .price-detail-table-panel{
+  border:1px solid #e2e8f0;border-radius:16px;background:#fff;box-shadow:0 8px 22px rgba(15,23,42,.035);padding:14px;
+}
+.price-page-v53 .price-saved-list{position:sticky;top:10px;align-self:start;max-height:calc(100vh - 170px);display:flex;flex-direction:column;gap:10px}
+.price-page-v53 .price-saved-list.cost-list,.price-page-v53 .price-product-picker-panel.cost-pick,.price-page-v53 .price-detail-table-panel.cost-draft{background:#fffaf7;border-color:#fed7aa}
+.price-page-v53 .price-box-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.price-page-v53 .price-box-head b{font-size:15px;color:#0f172a}
+.price-page-v53 .price-box-head small{font-size:12px;color:#64748b;font-weight:700;text-align:right}
+.price-page-v53 .price-list-table-wrap{overflow:auto;border:1px solid #e2e8f0;border-radius:12px;max-height:460px;background:#fff}
+.price-page-v53 .price-list-table th,.price-page-v53 .price-list-table td{padding:9px 8px;font-size:12.5px;vertical-align:top}
+.price-page-v53 .price-list-table td:first-child{min-width:150px}
+.price-page-v53 .price-list-table .btn{padding:6px 8px;font-size:11px;border-radius:8px;margin:2px}
+.price-page-v53 .price-product-and-detail{display:grid;grid-template-columns:minmax(330px,.78fr) minmax(520px,1.22fr);gap:14px;align-items:start}
+.price-page-v53 .price-picker-tools{display:grid;grid-template-columns:minmax(180px,1fr) auto auto auto;gap:8px;margin-bottom:10px}
+.price-page-v53 .price-picker-tools input{height:42px;border-radius:10px}
+.price-page-v53 .price-picker-tools .btn{padding:9px 10px;border-radius:10px;white-space:nowrap}
+.price-page-v53 .price-selected-pill{display:block;margin:0 0 10px 0;border-radius:12px;background:#e0f2fe;color:#075985;border:1px solid #bae6fd;padding:9px 10px;font-weight:800}
+.price-page-v53 .cost-pill{background:#fee2e2!important;color:#991b1b!important;border-color:#fecaca!important}
+.price-page-v53 .price-product-grid{display:grid!important;grid-template-columns:repeat(auto-fill,minmax(132px,1fr))!important;gap:7px!important;max-height:410px!important;overflow:auto;padding:8px!important;border:1px solid #e2e8f0!important;border-radius:12px!important;background:#f8fafc!important}
+.price-page-v53 .price-product-grid label.model-chip{padding:7px 8px!important;border-radius:10px!important;background:#fff!important;border:1px solid #e2e8f0!important;box-shadow:none!important;min-height:56px!important}
+.price-page-v53 .price-product-grid label.model-chip:hover{border-color:#93c5fd;background:#eff6ff!important}
+.price-page-v53 .price-product-grid label.model-chip input{width:auto!important;margin-top:1px;transform:scale(.9)}
+.price-page-v53 .price-product-grid label.model-chip b{font-size:12px;color:#1d4ed8;line-height:1.1;display:block;max-width:94px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price-page-v53 .price-product-grid label.model-chip small{font-size:10.5px;line-height:1.2;max-height:24px;overflow:hidden;color:#475569;font-weight:600}
+.price-page-v53 .price-product-grid label.model-chip em{font-size:10px;background:#eef2ff;color:#475569;border-radius:999px;padding:1px 6px;display:inline-block;margin-top:3px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.price-page-v53 .slip-draft-box{max-height:470px;overflow:auto;border:1px solid #e2e8f0;border-radius:12px;background:#fff}
+.price-page-v53 .slip-draft-box table{min-width:640px}
+.price-page-v53 .slip-draft-box th{background:#eef2ff;color:#0f172a;position:sticky;top:0;z-index:2}
+.price-page-v53 .cost-draft .slip-draft-box th{background:#fff1f2}
+.price-page-v53 .slip-draft-box th,.price-page-v53 .slip-draft-box td{padding:9px 10px;font-size:13px}
+.price-page-v53 .slip-draft-box input{height:36px;border-radius:9px;text-align:right;font-weight:800}
+.price-page-v53 .slip-save-bar{position:static!important;margin-top:12px;border-radius:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px}
+.price-page-v53 .slip-save-bar span{font-size:13px;font-weight:700;color:#475569}
+.price-page-v53 .cost-warning-line{margin:14px 18px 0 18px}
+@media(max-width:1320px){
+  .price-page-v53 .price-slip-body{grid-template-columns:1fr}
+  .price-page-v53 .price-saved-list{position:static;max-height:none}
+  .price-page-v53 .price-list-table-wrap{max-height:300px}
+}
+@media(max-width:980px){
+  .price-page-v53 .price-sheet-head,.price-page-v53 .price-slip-toolbar{flex-direction:column;align-items:stretch}
+  .price-page-v53 .price-product-and-detail{grid-template-columns:1fr}
+  .price-page-v53 .price-picker-tools{grid-template-columns:1fr 1fr}
+  .price-page-v53 .slip-form-grid{grid-template-columns:1fr!important}
+  .price-page-v53 .slip-form-grid .span2{grid-column:auto}
+  .price-page-v53 .price-sheet-tabs{flex-direction:column}
+}
