@@ -44,7 +44,7 @@
         <div class="menu-group open">
           <button type="button" class="menu-toggle">💰 Tài chính</button>
           <div class="submenu">
-            <button data-page="commissions">Hoa hồng</button>
+            <button data-page="commissions">Thu nhập nhân viên</button>
             <button data-page="expenses">Chi phí</button>
             <button data-page="salaries">Lương nhân viên</button>
           </div>
@@ -87,6 +87,9 @@
           <div class="kpi blue"><span>Doanh thu tháng</span><b id="kpiRevenue">0</b><small>Đã trừ chiết khấu, gồm VAT nếu có</small></div>
           <div class="kpi green view-cost" id="kpiProfitCard"><span>Lợi nhuận tháng</span><b id="kpiProfit">0</b><small>Chỉ Admin được xem</small></div>
           <div class="kpi orange"><span>Công nợ phải thu</span><b id="kpiDebt">0</b><small>Còn nợ từ đơn bán</small></div>
+          <div class="kpi purple"><span>Đang nợ</span><b id="kpiDebtCount">0</b><small>Số phiếu còn nợ</small></div>
+          <div class="kpi green"><span>Đã tất toán</span><b id="kpiSettledCount">0</b><small>Số phiếu đã thu đủ</small></div>
+          <div class="kpi red"><span>Quá hạn</span><b id="kpiOverdueCount">0</b><small>Phiếu nợ quá 30 ngày</small></div>
           <div class="kpi red"><span>Tồn kho thấp</span><b id="kpiLowStock">0</b><small>Cảnh báo dưới 3 bộ</small></div>
         </div>
         <div class="dashboard-grid">
@@ -193,7 +196,7 @@
       
 <section id="commissions" class="page">
         <div class="panel wide">
-          <div class="panel-head"><h3>🔎 Lọc báo cáo hoa hồng</h3><div><button class="btn primary" onclick="applyCommissionFilter()">Xem</button> <button class="btn ghost" onclick="resetCommissionFilter()">Làm mới</button> <button class="btn ghost" onclick="exportExcel('commissions')">Xuất Excel tổng</button> <button class="btn primary" onclick="exportCommissionByStaff()">Xuất Excel nhân viên đang chọn</button></div></div>
+          <div class="panel-head"><h3>🔎 Lọc thu nhập nhân viên</h3><div><button class="btn primary" onclick="applyCommissionFilter()">Xem</button> <button class="btn ghost" onclick="resetCommissionFilter()">Làm mới</button> <button class="btn ghost" onclick="exportExcel('commissions')">Xuất Excel tổng</button> <button class="btn ghost" onclick="exportExcel('techPerformance')">Xuất hiệu suất KT</button> <button class="btn ghost" onclick="exportExcel('employeeIncome')">Xuất tổng thu nhập</button> <button class="btn primary" onclick="exportCommissionByStaff()">Xuất Excel nhân viên đang chọn</button></div></div>
           <div class="grid form-grid">
             <div><label>Tìm kiếm</label><input id="commissionSearch" placeholder="Tên nhân viên / mã đơn / khách hàng" onkeydown="if(event.key==='Enter')applyCommissionFilter()" /></div>
             <div><label>Phòng ban</label><select id="commissionDept" onchange="refreshCommissionStaffOptions()"><option value="">Tất cả</option><option value="Sale">Sale</option><option value="Kỹ thuật">Kỹ thuật</option></select></div>
@@ -203,14 +206,23 @@
             <div><label>Đến ngày</label><input type="date" id="commissionTo" onchange="document.getElementById('commissionPeriod').value='custom'" /></div>
           </div>
           <div class="total-box" id="commissionSummary"><div>Tổng doanh thu: <b>0đ</b></div><div>Hoa hồng Sale: <b>0đ</b></div><div>Công kỹ thuật: <b>0đ</b></div><div>Tổng chi: <b>0đ</b></div></div>
+          <div class="toolbar"><button class="btn ghost" onclick="showIncomeTab('sale')">Hoa hồng Sale</button><button class="btn ghost" onclick="showIncomeTab('tech')">Công kỹ thuật</button><button class="btn ghost" onclick="showIncomeTab('income')">Tổng thu nhập</button><button class="btn ghost" onclick="showIncomeTab('performance')">Hiệu suất kỹ thuật</button></div>
         </div>
-        <div class="panel">
+        <div class="panel income-tab income-sale">
           <div class="panel-head"><h3>💰 Hoa hồng Sale theo nhân viên</h3></div>
           <table><thead><tr><th>Nhân viên Sale</th><th>Số đơn đã thu đủ</th><th>Doanh thu đã thu đủ</th><th>Doanh số tính HH</th><th>Phụ thu</th><th>Chiết khấu</th><th>Hoa hồng Sale</th><th>Hành động</th></tr></thead><tbody id="commissionByStaff"></tbody></table>
         </div>
-        <div class="panel">
+        <div class="panel income-tab income-tech">
           <div class="panel-head"><h3>🛠️ Công kỹ thuật theo nhân viên</h3></div>
           <table><thead><tr><th>Nhân viên kỹ thuật</th><th>Số đơn đã thu đủ</th><th>Doanh thu phụ trách đã thu đủ</th><th>Công kỹ thuật</th><th>Tiền xăng</th><th>Tổng nhận</th></tr></thead><tbody id="commissionByTech"></tbody></table>
+        </div>
+        <div class="panel income-tab income-income">
+          <div class="panel-head"><h3>👤 Tổng thu nhập nhân viên</h3><span>Hoa hồng Sale + công kỹ thuật + tiền xăng + thưởng - phạt/lương nhập thêm</span></div>
+          <table><thead><tr><th>Nhân viên</th><th>Hoa hồng Sale</th><th>Công kỹ thuật</th><th>Tiền xăng</th><th>Thưởng</th><th>Phạt</th><th>Tổng thu nhập</th></tr></thead><tbody id="employeeIncomeTable"></tbody></table>
+        </div>
+        <div class="panel income-tab income-performance">
+          <div class="panel-head"><h3>📈 Báo cáo hiệu suất kỹ thuật</h3><span>Theo số phiếu, số bộ, công, tiền xăng và bảo hành phát sinh</span></div>
+          <table><thead><tr><th>Kỹ thuật</th><th>Số phiếu</th><th>Số bộ</th><th>Công</th><th>Tiền xăng</th><th>Bảo hành phát sinh</th></tr></thead><tbody id="techPerformanceTable"></tbody></table>
         </div>
         <div class="panel wide">
           <div class="panel-head"><h3 id="commissionOrderTitle">🧾 Hoa hồng / công kỹ thuật theo từng đơn hàng</h3></div>
@@ -258,10 +270,12 @@
           <div class="debt-card active"><span>Khách còn nợ</span><b id="debtActiveCount">0</b><small>Cần ưu tiên thu</small></div>
           <div class="debt-card money"><span>Tổng phải thu</span><b id="debtActiveTotal">0</b><small>Số tiền còn nợ</small></div>
           <div class="debt-card paid"><span>Đã tất toán</span><b id="debtSettledCount">0</b><small>Lưu lịch sử phía dưới</small></div>
+          <div class="debt-card danger"><span>Quá hạn</span><b id="debtOverdueTotal">0</b><small>Nợ quá 30 ngày</small></div>
         </div>
-        <div class="panel debt-panel debt-active-panel"><div class="panel-head"><div><h3>💳 Công nợ phải thu</h3><span>Chỉ hiển thị khách còn nợ. Bấm Thu tiền để tự điền đúng số còn nợ.</span></div><button class="btn primary debt-big-btn" onclick="openReceiptForm()">+ Tạo phiếu thu</button></div><div class="toolbar"><input class="search" id="debtSearch" placeholder="Tìm công nợ theo tên khách / SĐT / mã KH" oninput="renderDebts()" /><button class="btn ghost" onclick="clearDebtSearch()">Xóa tìm</button><span id="debtSearchCount" class="muted-small"></span></div><table><thead><tr><th>Mã phiếu</th><th>Mã KH</th><th>Khách hàng</th><th>Địa chỉ</th><th>Sản phẩm</th><th>Tổng mua</th><th>Đã thu</th><th>Còn nợ</th><th>Thao tác nhanh</th></tr></thead><tbody id="debtTable"></tbody></table></div>
+        <div class="panel"><div class="toolbar"><b>Lọc công nợ:</b><label><input type="radio" name="debtStatusFilter" value="active" checked onchange="renderDebts()"> Đang nợ</label><label><input type="radio" name="debtStatusFilter" value="settled" onchange="renderDebts()"> Đã tất toán</label><label><input type="radio" name="debtStatusFilter" value="all" onchange="renderDebts()"> Tất cả</label><button class="btn ghost" onclick="exportExcel('debtsSettled')">Xuất công nợ đã tất toán</button></div><div class="total-box" id="debtStatsBox"></div></div>
+        <div class="panel debt-panel debt-active-panel"><div class="panel-head"><div><h3>💳 Công nợ phải thu</h3><span>Chỉ hiển thị khách còn nợ. Bấm Thu tiền để tự điền đúng số còn nợ.</span></div><button class="btn primary debt-big-btn" onclick="openReceiptForm()">+ Tạo phiếu thu</button></div><div class="toolbar"><input class="search" id="debtSearch" placeholder="Tìm công nợ theo tên khách / SĐT / mã KH" oninput="renderDebts()" /><button class="btn ghost" onclick="clearDebtSearch()">Xóa tìm</button><span id="debtSearchCount" class="muted-small"></span></div><table><thead><tr><th>Mã phiếu</th><th>Mã KH</th><th>Khách hàng</th><th>Địa chỉ</th><th>Sản phẩm</th><th>Tổng mua</th><th>Đã thu</th><th>Ngày bán</th><th>Còn nợ</th><th>Quá hạn</th><th>Thao tác nhanh</th></tr></thead><tbody id="debtTable"></tbody></table></div>
         <div class="panel receipt-panel"><div class="panel-head"><div><h3>🧾 Phiếu thu</h3><span>Tạo, sửa, in phiếu thu. Sau khi thu đủ, công nợ tự chuyển xuống mục đã tất toán bên dưới.</span></div><div><button class="btn ghost" onclick="resetReceiptForm()">Nhập lại</button><button class="btn primary" onclick="saveReceipt()">Lưu phiếu thu</button></div></div><div class="grid form-grid receipt-form"><div><label>Khách hàng</label><select id="receiptCustomer"></select></div><div><label>Số tiền thu</label><input id="receiptAmount" type="number" /></div><div><label>Ngày thu</label><input id="receiptDate" type="date" /></div><div><label>Ghi chú</label><input id="receiptNote" placeholder="VD: Thu đủ đơn BH..." /></div></div><div class="toolbar"><input class="search" id="receiptSearch" placeholder="Tìm phiếu thu theo mã PT / tên khách / SĐT / mã KH / ghi chú" oninput="renderReceipts()" /><button class="btn ghost" onclick="clearReceiptSearch()">Xóa tìm</button><span id="receiptSearchCount" class="muted-small"></span></div><table><thead><tr><th>Mã PT</th><th>Ngày</th><th>Mã KH</th><th>Khách</th><th>Số tiền</th><th>Ghi chú</th><th>Hành động</th></tr></thead><tbody id="receiptTable"></tbody></table></div>
-        <div class="panel settled-panel"><div class="panel-head"><div><h3>✅ Công nợ đã tất toán</h3><span>Đưa xuống dưới phiếu thu để không lẫn với danh sách cần thu tiền.</span></div></div><table><thead><tr><th>Mã phiếu</th><th>Mã KH</th><th>Khách hàng</th><th>Địa chỉ</th><th>Sản phẩm</th><th>Tổng mua</th><th>Đã thu</th><th>Trạng thái</th></tr></thead><tbody id="settledDebtTable"></tbody></table></div>
+        <div class="panel settled-panel"><div class="panel-head"><div><h3>✅ Công nợ đã tất toán</h3><span>Đưa xuống dưới phiếu thu để không lẫn với danh sách cần thu tiền.</span></div></div><table><thead><tr><th>STT</th><th>Phiếu</th><th>Khách hàng</th><th>SĐT</th><th>Model</th><th>Tổng tiền</th><th>Đã thu</th><th>Ngày tất toán</th></tr></thead><tbody id="settledDebtTable"></tbody></table></div>
       </section>
 
       <section id="inventory" class="page warehouse-page">
@@ -580,7 +594,7 @@
             <div><label>Đến ngày</label><input id="reportTo" type="date" onchange="document.getElementById('reportPeriod').value='custom';renderReports()"></div>
             <div><label>Tìm model/sản phẩm</label><input id="reportProductSearch" placeholder="VD: F07, S01, 569..." oninput="renderReports()"></div>
           </div>
-          <div id="reportBox" class="report-grid"></div>
+          <div class="toolbar report-tabs"><b>📊 Báo cáo:</b><button class="btn ghost">Doanh thu</button><button class="btn ghost">Lợi nhuận</button><button class="btn ghost">Tồn kho</button><button class="btn ghost" onclick="showPage('debts')">Công nợ</button><button class="btn ghost" onclick="showPage('commissions')">Hoa hồng</button><button class="btn ghost" onclick="showPage('warranty')">Bảo hành</button></div><div id="reportBox" class="report-grid"></div>
         </div>
         <div class="card view-cost">
           <div class="section-title"><h3>Phân tích lợi nhuận chi tiết</h3><small>Hiển thị rõ: doanh thu - giá vốn - hoa hồng - kỹ thuật - chi phí</small></div>
