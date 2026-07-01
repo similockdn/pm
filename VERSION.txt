@@ -1,8 +1,1 @@
-SIMILOCK ERP - v53_price_ui_tabs
-Ngày cập nhật: 27/06/2026
-
-Nội dung:
-- Thiết kế lại giao diện Bảng giá theo dạng phiếu bán hàng: thông tin phiếu phía trên, chọn sản phẩm và bảng chi tiết phía dưới.
-- Tách rõ 2 tab: Bảng giá bán hàng và Bảng giá vốn.
-- Thu gọn item sản phẩm dạng chip nhỏ, dễ tìm model và chọn nhiều sản phẩm.
-- Giữ nguyên logic lưu/import/export để không ảnh hưởng dữ liệu Firebase hiện có.
+V106_ENTERPRISE_WORKFLOW_STABLE_RC
