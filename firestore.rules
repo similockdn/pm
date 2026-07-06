@@ -1,59 +1,22 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
-    function myEmail() { return request.auth.token.email.lower(); }
-    function isMainAdminEmail() { return signedIn() && myEmail() == 'similockdn@gmail.com'; }
-    function myUserPath() { return /databases/$(database)/documents/users/$(request.auth.uid); }
-    function myUserExists() { return signedIn() && exists(myUserPath()); }
-    function myUser() { return get(myUserPath()).data; }
-    function isAdmin() { return myUserExists() && myUser().role == 'Admin'; }
-    function hasProfile() { return myUserExists() && myUser().role != 'Chưa phân quyền'; }
-
-    // CHUẨN BẢO MẬT: users/{UID Firebase Auth}
-    match /users/{uid} {
+    function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function role() { return signedIn() && userDoc().data.role; }
+    function isAdmin() { return role() in ['ADMIN','HIEU_TRUONG']; }
+    function isCouncil() { return role() in ['ADMIN','HIEU_TRUONG','BGH','TO_TRUONG']; }
+    match /settings/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /users/{uid} { allow read: if signedIn(); allow create, update, delete: if isAdmin(); }
+    match /departments/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /criteria/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /periods/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
+    match /evaluations/{id} {
       allow read: if signedIn();
-
-      // Chỉ email similockdn@gmail.com được tự tạo hồ sơ Admin cho chính UID của mình.
-      // Tài khoản khác chỉ được tự tạo hồ sơ chờ phân quyền, KHÔNG được tự gán Admin.
-      allow create: if signedIn() && (
-        (isMainAdminEmail() && uid == request.auth.uid && request.resource.data.role == 'Admin') ||
-        (uid == request.auth.uid
-          && request.resource.data.role == 'Chưa phân quyền'
-          && request.resource.data.perms is list
-          && request.resource.data.perms.size() == 0)
-      );
-
-      // Admin đã hợp lệ được phân quyền/sửa user.
-      // User thường chỉ được sửa thông tin cá nhân, không được đổi role/perms.
-      allow update: if signedIn() && (
-        isAdmin() ||
-        (isMainAdminEmail() && uid == request.auth.uid && request.resource.data.role == 'Admin') ||
-        (uid == request.auth.uid
-          && request.resource.data.role == resource.data.role
-          && request.resource.data.perms == resource.data.perms)
-      );
-
+      allow create: if signedIn() && request.resource.data.employeeUid == request.auth.uid || isCouncil();
+      allow update: if isCouncil() || (resource.data.employeeUid == request.auth.uid && resource.data.locked != true);
       allow delete: if isAdmin();
     }
-
-    // Bảng giá vốn: chỉ Admin được đọc/ghi để nhân viên không xem được giá vốn.
-    match /costPrices/{id} {
-      allow read, write: if isAdmin() || isMainAdminEmail();
-    }
-
-
-    // Lương nhân viên: chỉ Admin hoặc user có quyền lương mới được truy cập.
-    match /salaries/{id} {
-      allow read: if signedIn() && (isAdmin() || isMainAdminEmail() || (myUserExists() && myUser().perms.hasAny(['viewSalary','manageSalary'])));
-      allow write: if signedIn() && (isAdmin() || isMainAdminEmail() || (myUserExists() && myUser().perms.hasAny(['manageSalary'])));
-    }
-
-    // Dữ liệu ERP: chỉ tài khoản đã có hồ sơ hợp lệ mới truy cập.
-    // Email Admin chính được phép khởi tạo hệ thống lần đầu.
-    match /{document=**} {
-      allow read, write: if signedIn() && (hasProfile() || isMainAdminEmail());
-    }
+    match /auditLogs/{id} { allow read: if isCouncil(); allow create: if signedIn(); allow update, delete: if false; }
   }
 }

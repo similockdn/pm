@@ -1,0 +1,11 @@
+KIỂM TRA NGHIỆP VỤ
+1. Tổng tiêu chí = 100 điểm.
+2. Tiêu chí chung = 30 điểm.
+3. Kết quả nhiệm vụ = 70 điểm.
+4. Điểm cộng không vượt +6.
+5. Tổng điểm không vượt 100.
+6. Phiếu đã nộp phải có minh chứng.
+7. Tháng đã khóa không cho sửa.
+8. HTXSNV không vượt quota cấu hình.
+9. Có nhật ký thao tác khi thêm/sửa/xóa/khóa.
+10. Báo cáo xuất được CSV.

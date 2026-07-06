@@ -3,109 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Injection Production Demo</title>
+  <title>THCS Trưng Vương Đà Nẵng - Đánh giá năng lực</title>
   <link rel="stylesheet" href="style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app">
-    <aside class="sidebar">
-      <div class="brand">
-        <div class="logo">SS</div>
-        <div>
-          <h1>Injection Demo</h1>
-          <p>Quản lý sản lượng máy Injection</p>
-        </div>
+  <div id="toast"></div>
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo">TV</div>
+      <div><b>THCS Trưng Vương Đà Nẵng</b><span>Đánh giá năng lực & thu nhập tăng thêm</span></div>
+    </div>
+    <nav id="menu"></nav>
+    <div class="sidebar-footer">
+      <span id="syncStatus">Local mode</span>
+      <button id="btnSeed">Tạo dữ liệu mẫu</button>
+    </div>
+  </aside>
+  <main class="main">
+    <header class="topbar">
+      <div>
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageDesc">Quản trị quy trình đánh giá tháng, quý, năm học</p>
       </div>
-      <button class="nav active" data-view="dashboard">Tổng quan</button>
-      <button class="nav" data-view="entry">Nhập sản lượng</button>
-      <button class="nav" data-view="report">Báo cáo</button>
-      <button class="nav" data-view="master">Danh mục</button>
-      <button class="danger" id="clearData">Xóa dữ liệu test</button>
-    </aside>
-
-    <main class="main">
-      <section id="dashboard" class="view active">
-        <div class="topbar">
-          <h2>Dashboard hôm nay</h2>
-          <input type="date" id="dashboardDate" />
-        </div>
-        <div class="cards">
-          <div class="card"><span>Kế hoạch</span><strong id="sumPlan">0</strong><small>đôi</small></div>
-          <div class="card"><span>Đã sản xuất</span><strong id="sumTotal">0</strong><small>đôi</small></div>
-          <div class="card ok"><span>OK</span><strong id="sumOk">0</strong><small>đôi</small></div>
-          <div class="card ng"><span>NG / Lỗi</span><strong id="sumNg">0</strong><small>đôi</small></div>
-          <div class="card"><span>Yield</span><strong id="sumYield">0%</strong><small>OK / Tổng</small></div>
-        </div>
-        <div class="panel">
-          <h3>Sản lượng theo máy</h3>
-          <div id="machineBars" class="bars"></div>
-        </div>
-        <div class="panel">
-          <h3>Lỗi nhiều nhất</h3>
-          <div id="defectList" class="defects"></div>
-        </div>
-      </section>
-
-      <section id="entry" class="view">
-        <div class="topbar">
-          <h2>Nhập sản lượng Injection</h2>
-          <button id="fillSample" class="secondary">Tạo dữ liệu mẫu</button>
-        </div>
-        <form id="productionForm" class="form panel">
-          <div class="grid">
-            <label>Ngày<input type="date" name="date" required /></label>
-            <label>Giờ<input type="time" name="time" required /></label>
-            <label>Ca
-              <select name="shift"><option>A</option><option>B</option><option>C</option></select>
-            </label>
-            <label>Máy<select name="machine" id="machineSelect"></select></label>
-            <label>Model<input name="model" placeholder="VD: Adidas A" required /></label>
-            <label>Size<input name="size" placeholder="VD: 42" /></label>
-            <label>Kế hoạch<input type="number" min="0" name="plan" value="0" /></label>
-            <label>OK Qty<input type="number" min="0" name="ok" value="0" required /></label>
-            <label>NG Qty<input type="number" min="0" name="ng" value="0" required /></label>
-            <label>Lý do lỗi
-              <select name="defect">
-                <option value="">Không có</option>
-                <option>Bubble</option><option>Short Shot</option><option>Burn</option>
-                <option>Color</option><option>Crack</option><option>Flash</option><option>Others</option>
-              </select>
-            </label>
-            <label>Ghi chú<input name="note" placeholder="VD: máy dừng 10 phút" /></label>
-          </div>
-          <button type="submit">Lưu sản lượng</button>
-        </form>
-        <div class="panel">
-          <h3>Dữ liệu vừa nhập</h3>
-          <div class="tableWrap"><table id="entryTable"></table></div>
-        </div>
-      </section>
-
-      <section id="report" class="view">
-        <div class="topbar">
-          <h2>Báo cáo</h2>
-          <div class="actions">
-            <input type="date" id="reportDate" />
-            <button id="exportCsv">Xuất Excel CSV</button>
-          </div>
-        </div>
-        <div class="panel">
-          <div class="tableWrap"><table id="reportTable"></table></div>
-        </div>
-      </section>
-
-      <section id="master" class="view">
-        <div class="topbar"><h2>Danh mục máy</h2></div>
-        <div class="panel form">
-          <div class="inline">
-            <input id="newMachine" placeholder="VD: INJ-04" />
-            <button id="addMachine">Thêm máy</button>
-          </div>
-          <div id="machineList" class="chips"></div>
-        </div>
-      </section>
-    </main>
-  </div>
-  <script src="app.js"></script>
+      <div class="top-actions">
+        <input id="globalSearch" placeholder="Tìm nhanh: tên, mã CB, tổ, xếp loại..." />
+        <select id="schoolYear"></select>
+        <select id="period"></select>
+        <button id="btnSaveFirebase" class="primary">Đồng bộ Firebase</button>
+      </div>
+    </header>
+    <section id="app"></section>
+  </main>
+  <script type="module" src="firebase-config.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
