@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn(){ return request.auth != null; }
+    function role(){ return signedIn() ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role : null; }
+    function isAdmin(){ return role() in ['Admin','Hiệu trưởng']; }
+    match /schools/{schoolId}/{document=**} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin() || role() in ['Phó Hiệu trưởng','Tổ trưởng','Hội đồng','Giáo viên'];
+      allow delete: if isAdmin();
+    }
+    match /auditLogs/{id} {
+      allow read: if isAdmin();
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+    match /users/{uid} {
+      allow read: if signedIn();
+      allow write: if isAdmin() || request.auth.uid == uid;
+    }
+  }
+}

@@ -1,0 +1,25 @@
+# Firestore Collection Design
+
+- users: hồ sơ tài khoản, vai trò, tổ chuyên môn.
+- roles: danh mục vai trò.
+- permissions: quyền chi tiết.
+- schools: thông tin trường.
+- departments: phòng ban/tổ chuyên môn.
+- academicYears: năm học.
+- evaluationPeriods: kỳ đánh giá tháng/quý/năm.
+- criteriaGroups: nhóm tiêu chí.
+- criteria: tiêu chí con, điểm tối đa.
+- workPlans: kế hoạch tháng của cán bộ.
+- workTasks: nhiệm vụ chi tiết.
+- evidences: metadata minh chứng.
+- selfEvaluations: tự đánh giá.
+- peerEvaluations: góp ý đồng nghiệp.
+- teamEvaluations: đánh giá tổ chuyên môn.
+- councilEvaluations: hội đồng liên tịch.
+- finalEvaluations: kết quả chốt.
+- outstandingVotes: bình chọn HTXSNV.
+- salaryExtraPayments: tính thu nhập tăng thêm.
+- announcements: thông báo công khai.
+- notifications: nhắc việc.
+- auditLogs: nhật ký bất biến.
+- settings: cấu hình hệ thống.
