@@ -3,20 +3,35 @@ service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() { return request.auth != null; }
     function userDoc() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
-    function role() { return signedIn() && userDoc().data.role; }
-    function isAdmin() { return role() in ['ADMIN','HIEU_TRUONG']; }
-    function isCouncil() { return role() in ['ADMIN','HIEU_TRUONG','BGH','TO_TRUONG']; }
-    match /settings/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
-    match /users/{uid} { allow read: if signedIn(); allow create, update, delete: if isAdmin(); }
-    match /departments/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
-    match /criteria/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
-    match /periods/{id} { allow read: if signedIn(); allow write: if isAdmin(); }
-    match /evaluations/{id} {
+    function role() { return signedIn() && userDoc().data.role != null ? userDoc().data.role : 'viewer'; }
+    function isAdmin() { return signedIn() && role() in ['admin','principal']; }
+    function isManager() { return signedIn() && role() in ['admin','principal','vice_principal','council','team_leader']; }
+
+    match /users/{userId} {
       allow read: if signedIn();
-      allow create: if signedIn() && request.resource.data.employeeUid == request.auth.uid || isCouncil();
-      allow update: if isCouncil() || (resource.data.employeeUid == request.auth.uid && resource.data.locked != true);
+      allow create, update, delete: if isAdmin();
+    }
+    match /staff/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /criteria/{docId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /evaluations/{docId} {
+      allow read: if signedIn();
+      allow create: if signedIn();
+      allow update: if isManager() || resource.data.userId == request.auth.uid;
       allow delete: if isAdmin();
     }
-    match /auditLogs/{id} { allow read: if isCouncil(); allow create: if signedIn(); allow update, delete: if false; }
+    match /auditLogs/{docId} {
+      allow read: if isAdmin();
+      allow create: if signedIn();
+      allow update, delete: if false;
+    }
+    match /{document=**} {
+      allow read, write: if false;
+    }
   }
 }
