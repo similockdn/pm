@@ -245,7 +245,8 @@
             <div><label>Tìm kiếm</label><input id="commissionSearch" placeholder="Tên nhân viên / mã đơn / khách hàng" onkeydown="if(event.key==='Enter')applyCommissionFilter()" /></div>
             <div><label>Phòng ban</label><select id="commissionDept" onchange="refreshCommissionStaffOptions()"><option value="">Tất cả</option><option value="Sale">Sale</option><option value="Kỹ thuật">Kỹ thuật</option></select></div>
             <div><label>Nhân viên</label><select id="commissionStaff"><option value="">Tất cả nhân viên</option></select></div>
-            <div><label>Kỳ xem</label><select id="commissionPeriod" onchange="commissionPeriodChanged()"><option value="all">Tất cả</option><option value="day">Hôm nay</option><option value="week">Tuần này</option><option value="month">Tháng này</option><option value="year">Năm này</option><option value="custom">Tùy chọn</option></select></div>
+            <div><label>Kỳ xem</label><select id="commissionPeriod" onchange="commissionPeriodChanged()"><option value="all">Tất cả</option><option value="day">Hôm nay</option><option value="week">Tuần này</option><option value="month">Theo tháng đã chọn</option><option value="year">Năm này</option><option value="custom">Tùy chọn ngày</option></select></div>
+            <div><label>Tháng cần xem</label><input type="month" id="commissionMonth" onchange="commissionMonthChanged()" /></div>
             <div><label>Từ ngày</label><input type="date" id="commissionFrom" onchange="document.getElementById('commissionPeriod').value='custom'" /></div>
             <div><label>Đến ngày</label><input type="date" id="commissionTo" onchange="document.getElementById('commissionPeriod').value='custom'" /></div>
           </div>
@@ -261,7 +262,7 @@
           <table><thead><tr><th>Nhân viên kỹ thuật</th><th>Số đơn đã thu đủ</th><th>Doanh thu phụ trách đã thu đủ</th><th>Công kỹ thuật</th><th>Tiền xăng</th><th>Tổng nhận</th></tr></thead><tbody id="commissionByTech"></tbody></table>
         </div>
         <div class="panel income-tab income-income">
-          <div class="panel-head"><h3>👤 Tổng thu nhập nhân viên</h3><span>Hoa hồng Sale + công kỹ thuật + tiền xăng + thưởng - phạt/lương nhập thêm</span></div>
+          <div class="panel-head"><h3>👤 Tổng thu nhập nhân viên</h3><span>Lọc đúng theo tháng đạt điều kiện thu đủ 100%; thưởng/phạt lấy theo ngày ghi nhận lương</span></div>
           <table><thead><tr><th>Nhân viên</th><th>Hoa hồng Sale</th><th>Công kỹ thuật</th><th>Tiền xăng</th><th>Thưởng</th><th>Phạt</th><th>Tổng thu nhập</th></tr></thead><tbody id="employeeIncomeTable"></tbody></table>
         </div>
         <div class="panel income-tab income-performance">

@@ -32,7 +32,7 @@ const functionNames=[
   'saleCommissionBaseValue','saleExpectedCommissionValue','saleCommissionValue',
   'receiptSaleId','receiptCustomerMatchesSale','receiptDedupKey','uniqueReceiptsForFinance','receiptsForSalePayment',
   'saleDirectPaid','salePaymentInfo','saleFullyPaidForCommission','salePaymentEvents','saleCommissionEarnedAt',
-  'commissionEligibleSales','commissionFilteredSales','saleReturnVouchers','saleRefundVouchers',
+  'commissionEligibleSales','staffByIdentity','commissionStaffMeta','commissionRoleIncluded','commissionPartsForFilter','commissionFilteredSales','saleReturnVouchers','saleRefundVouchers',
   'calcSaleFromItemsForReturn','receiptDebtKey','staffFunctions','staffHasFunction','techFeeDefault','suggestedTechCost'
 ];
 
@@ -47,6 +47,9 @@ const ctx={
   financeDocDate:v=>String(v?.date||'').slice(0,10),
   normalizePaymentMethod:v=>String(v||'').trim(),
   normalizePhone:v=>String(v||'').replace(/\D/g,''),
+  searchKey:v=>String(v||'').trim().toLowerCase(),
+  saleCustomerInfo:s=>({name:s.customerName||'',phone:s.customerPhone||'',code:s.customerCode||''}),
+  saleItemSummary:s=>({models:(s.items||[]).map(x=>x.code).join(', ')}),
   debtClean:v=>String(v||'').trim().toLowerCase(),
   debtAddressKey:v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' '),
   costFor:()=>0,

@@ -58,7 +58,7 @@ const syncSaleExportStockToSticky=(...args)=>window.syncSaleExportStockToSticky(
 const updateSaleTotals=(...args)=>window.updateSaleTotals(...args);
 const viewCommissionStaff=(...args)=>window.viewCommissionStaff(...args);
 const viewSaleDetail=(...args)=>window.viewSaleDetail(...args);
-const money=n=>(Number(n)||0).toLocaleString('vi-VN')+'đ';const today=()=>new Date().toISOString().slice(0,10);const uid=()=>Math.random().toString(36).slice(2,9);const normEmail=v=>String(v||'').trim().toLowerCase();
+const money=n=>(Number(n)||0).toLocaleString('vi-VN')+'đ';const today=()=>isoDateFromLocal(new Date());const uid=()=>Math.random().toString(36).slice(2,9);const normEmail=v=>String(v||'').trim().toLowerCase();
 function numberToVietnamese(n){
   n=Math.round(Number(n)||0);
   if(n===0) return 'Không đồng';
@@ -106,7 +106,7 @@ const userDocRef = (u)=>doc(db,'users',u.uid);
 const userProfileData = (u, extra={})=>({uid:u.uid,email:normEmail(u.email),...extra});
 const WAREHOUSES=['Kho Chính','Kho Văn Phòng'];
 let currentUser=null,currentPerm={role:'Admin',perms:[],warehouseAccess:WAREHOUSES},creatingAdmin=false;let editingSale=null,editingStock=null,editingWarranty=null,editingExpense=null,editingReceipt=null;
-let commissionAppliedFilter={q:'',dept:'',staffId:'',period:'all',from:'',to:''};
+let commissionAppliedFilter={q:'',dept:'',staffId:'',period:'all',month:'',from:'',to:''};
 const data={customers:[],products:[],productCategories:[],systemCategories:[],warrantyReasons:[],staff:[],prices:[],costPrices:[],sales:[],stockVouchers:[],receipts:[],warranties:[],expenses:[],salaries:[],users:[],logs:[]};
 function userWarehouses(){return currentPerm.role==='Admin'?WAREHOUSES:((currentPerm.warehouseAccess&&currentPerm.warehouseAccess.length)?currentPerm.warehouseAccess:WAREHOUSES)}
 function canAccessWarehouse(w){return currentPerm.role==='Admin'||userWarehouses().includes(w)}
@@ -126,7 +126,7 @@ const permissionMap={
  'Kho Văn Phòng':['dashboard','inventory','stockbook','products'],
  'Kế toán':['dashboard','expenses','cashbook','commissions','debts','reports','sales','customers','products']
 };
-const permLabels={dashboard:'Dashboard',sales:'Bán hàng',commissions:'Hoa hồng',expenses:'Phiếu chi',cashbook:'Sổ quỹ',debts:'Công nợ',inventory:'Kho',stockbook:'Sổ kho',warranty:'Bảo hành',customers:'Khách hàng',products:'Sản phẩm',categories:'Danh mục chung',prices:'Bảng giá',categories:'Danh mục chung',staff:'Nhân viên',reports:'Báo cáo',categories:'Danh mục chung',permissions:'Phân quyền',system:'Hệ thống',viewCost:'Xem giá vốn/lợi nhuận',editSales:'Sửa đơn bán',deleteSales:'Hủy phiếu bán',editStock:'Sửa phiếu kho',deleteStock:'Xóa phiếu kho',audit:'Xem nhật ký thao tác',salaries:'Lương nhân viên',viewSalary:'Xem lương',manageSalary:'Quản lý lương'};
+const permLabels={dashboard:'Dashboard',sales:'Bán hàng',commissions:'Thu nhập nhân viên',expenses:'Phiếu chi',cashbook:'Sổ quỹ',debts:'Công nợ',inventory:'Kho',stockbook:'Sổ kho',warranty:'Bảo hành',customers:'Khách hàng',products:'Sản phẩm',categories:'Danh mục chung',prices:'Bảng giá',categories:'Danh mục chung',staff:'Nhân viên',reports:'Báo cáo',categories:'Danh mục chung',permissions:'Phân quyền',system:'Hệ thống',viewCost:'Xem giá vốn/lợi nhuận',editSales:'Sửa đơn bán',deleteSales:'Hủy phiếu bán',editStock:'Sửa phiếu kho',deleteStock:'Xóa phiếu kho',audit:'Xem nhật ký thao tác',salaries:'Lương nhân viên',viewSalary:'Xem lương',manageSalary:'Quản lý lương'};
 
 const permissionGroups=[
   {title:'Tổng quan',desc:'Các màn hình điều hành chung',keys:['dashboard','reports','audit']},
@@ -966,7 +966,7 @@ function applyPermissions(){
 }
 document.querySelectorAll('#menu .menu-toggle').forEach(btn=>btn.onclick=()=>btn.closest('.menu-group').classList.toggle('open'));document.querySelectorAll('#menu button[data-page]').forEach(btn=>btn.onclick=()=>showPage(btn.dataset.page));
 function showPage(id){if(!has(id))return alert('Tài khoản chưa được phân quyền');document.querySelectorAll('#menu button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===id));document.querySelectorAll('#menu .menu-group').forEach(g=>g.classList.toggle('active-group',[...g.querySelectorAll('button[data-page]')].some(b=>b.dataset.page===id)));const activeBtn=document.querySelector(`#menu button[data-page="${id}"]`);if(activeBtn)activeBtn.closest('.menu-group')?.classList.add('open');document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id===id));$('pageTitle').textContent=btnTitle(id);$('pageSub').textContent='Similock Đà Nẵng - Quản lý bán hàng, kho, công nợ, bảo hành';if(id==='reports')setTimeout(()=>window.setReportTab?.(currentReportTab||'revenue'),0)}
-function btnTitle(id){return ({dashboard:'Dashboard điều hành',sales:'Bán hàng',commissions:'Hoa hồng',expenses:'Phiếu chi / Chi phí',cashbook:'Sổ quỹ',salaries:'Lương nhân viên',debts:'Công nợ',inventory:'Kho hàng',stockbook:'Sổ kho',warranty:'Bảo hành',customers:'Khách hàng',products:'Sản phẩm',categories:'Danh mục chung',prices:'Bảng giá',categories:'Danh mục chung',staff:'Nhân viên',reports:'Báo cáo',categories:'Danh mục chung',permissions:'Phân quyền',system:'Hệ thống',audit:'Nhật ký thao tác'}[id]||id)}
+function btnTitle(id){return ({dashboard:'Dashboard điều hành',sales:'Bán hàng',commissions:'Thu nhập nhân viên',expenses:'Phiếu chi / Chi phí',cashbook:'Sổ quỹ',salaries:'Lương nhân viên',debts:'Công nợ',inventory:'Kho hàng',stockbook:'Sổ kho',warranty:'Bảo hành',customers:'Khách hàng',products:'Sản phẩm',categories:'Danh mục chung',prices:'Bảng giá',categories:'Danh mục chung',staff:'Nhân viên',reports:'Báo cáo',categories:'Danh mục chung',permissions:'Phân quyền',system:'Hệ thống',audit:'Nhật ký thao tác'}[id]||id)}
 
 function renderAll(){
   // V49: gọi hàm nội bộ trực tiếp, không phụ thuộc window.* khi module chưa export xong.
@@ -2606,22 +2606,24 @@ window.printSale=id=>{
   doPrint(html)
 }
 
-function periodRange(period){
-  const d=new Date();
-  const iso=x=>x.toISOString().slice(0,10);
-  if(period==='day') return {from:iso(d),to:iso(d)};
+function periodRange(period,referenceDate=today(),selectedMonth=''){
+  const ref=isoLocalDate(referenceDate||today());
+  const iso=isoDateFromLocal;
+  if(period==='day') return {from:iso(ref),to:iso(ref)};
   if(period==='week'){
-    const day=(d.getDay()+6)%7;
-    const start=new Date(d); start.setDate(d.getDate()-day);
-    const end=new Date(start); end.setDate(start.getDate()+6);
+    const day=(ref.getDay()+6)%7;
+    const start=new Date(ref.getFullYear(),ref.getMonth(),ref.getDate()-day);
+    const end=new Date(start.getFullYear(),start.getMonth(),start.getDate()+6);
     return {from:iso(start),to:iso(end)};
   }
   if(period==='month'){
-    const y=d.getFullYear(),m=d.getMonth();
-    return {from:iso(new Date(y,m,1)),to:iso(new Date(y,m+1,0))};
+    const validMonth=/^\d{4}-(0[1-9]|1[0-2])$/.test(String(selectedMonth||''));
+    const month=validMonth?String(selectedMonth):`${ref.getFullYear()}-${String(ref.getMonth()+1).padStart(2,'0')}`;
+    const [y,m]=month.split('-').map(Number);
+    return {from:`${month}-01`,to:iso(new Date(y,m,0))};
   }
   if(period==='year'){
-    const y=d.getFullYear();
+    const y=ref.getFullYear();
     return {from:`${y}-01-01`,to:`${y}-12-31`};
   }
   return {from:'',to:''};
@@ -2629,7 +2631,10 @@ function periodRange(period){
 
 function readCommissionFilterFromForm(){
   const period=$('commissionPeriod')?.value||'all';
-  const range=period==='custom'?{from:$('commissionFrom')?.value||'',to:$('commissionTo')?.value||''}:periodRange(period);
+  let selectedMonth=$('commissionMonth')?.value||'';
+  if(period==='month'&&!selectedMonth){selectedMonth=monthKey(today());if($('commissionMonth'))$('commissionMonth').value=selectedMonth;}
+  const range=period==='custom'?{from:$('commissionFrom')?.value||'',to:$('commissionTo')?.value||''}:periodRange(period,today(),selectedMonth);
+  if(range.from&&range.to&&range.from>range.to){const old=range.from;range.from=range.to;range.to=old;}
   if(period!=='custom'){
     if($('commissionFrom')) $('commissionFrom').value=range.from;
     if($('commissionTo')) $('commissionTo').value=range.to;
@@ -2645,6 +2650,7 @@ function readCommissionFilterFromForm(){
     dept:$('commissionDept')?.value||'',
     staffId,
     period,
+    month:selectedMonth,
     from:range.from||'',
     to:range.to||''
   };
@@ -2653,8 +2659,7 @@ window.refreshCommissionStaffOptions=()=>{
   const el=$('commissionStaff'); if(!el)return;
   const old=el.value;
   const dept=$('commissionDept')?.value||'';
-  let list=data.staff.filter(x=>!dept||x.dept===dept);
-  if(dept==='Sale') list=data.staff.filter(x=>x.dept==='Sale'||x.dept==='Quản lý');
+  let list=data.staff.filter(x=>!dept||staffHasFunction(x,dept)||(dept==='Sale'&&staffHasFunction(x,'Quản lý')));
   if(!canViewAllCommissions()){
     const own=currentStaffMatchIds();
     list=list.filter(x=>own.includes(x.id));
@@ -2670,10 +2675,22 @@ window.refreshCommissionStaffOptions=()=>{
 window.commissionPeriodChanged=()=>{
   const period=$('commissionPeriod')?.value||'all';
   if(period!=='custom'){
-    const range=periodRange(period);
+    let selectedMonth=$('commissionMonth')?.value||'';
+    if(period==='month'&&!selectedMonth){selectedMonth=monthKey(today());if($('commissionMonth'))$('commissionMonth').value=selectedMonth;}
+    const range=periodRange(period,today(),selectedMonth);
     if($('commissionFrom')) $('commissionFrom').value=range.from;
     if($('commissionTo')) $('commissionTo').value=range.to;
   }
+};
+window.commissionMonthChanged=()=>{
+  const selectedMonth=$('commissionMonth')?.value||'';
+  if(!selectedMonth)return;
+  if($('commissionPeriod'))$('commissionPeriod').value='month';
+  const range=periodRange('month',today(),selectedMonth);
+  if($('commissionFrom'))$('commissionFrom').value=range.from;
+  if($('commissionTo'))$('commissionTo').value=range.to;
+  commissionAppliedFilter=readCommissionFilterFromForm();
+  renderCommissions();
 };
 window.applyCommissionFilter=()=>{commissionAppliedFilter=readCommissionFilterFromForm();renderCommissions();};
 window.resetCommissionFilter=()=>{
@@ -2682,9 +2699,10 @@ window.resetCommissionFilter=()=>{
   refreshCommissionStaffOptions();
   if($('commissionStaff'))$('commissionStaff').value=canViewAllCommissions()?'':(currentStaffMatchIds()[0]||'__NO_STAFF__');
   if($('commissionPeriod'))$('commissionPeriod').value='all';
+  if($('commissionMonth'))$('commissionMonth').value='';
   if($('commissionFrom'))$('commissionFrom').value='';
   if($('commissionTo'))$('commissionTo').value='';
-  commissionAppliedFilter={q:'',dept:'',staffId:'',period:'all',from:'',to:''};
+  commissionAppliedFilter={q:'',dept:'',staffId:'',period:'all',month:'',from:'',to:''};
   renderCommissions();
 };
 window.viewCommissionStaff=(staffId,dept='Sale')=>{
@@ -2695,6 +2713,40 @@ window.viewCommissionStaff=(staffId,dept='Sale')=>{
   renderCommissions();
   $('commissionByOrder')?.closest('.panel')?.scrollIntoView({behavior:'smooth',block:'start'});
 };
+function staffByIdentity(id='',name=''){
+  const direct=id?data.staff.find(x=>x.id===id):null;
+  if(direct)return direct;
+  const key=searchKey(name||'');
+  if(!key)return null;
+  const matches=data.staff.filter(x=>searchKey(x.name||'')===key);
+  return matches.length===1?matches[0]:null;
+}
+function commissionStaffMeta(s={},role='Sale'){
+  const isSale=role==='Sale';
+  const rawId=String(isSale?s.staffId||'':s.techId||'').trim();
+  const rawName=String(isSale?s.staffName||'':s.techName||'').trim();
+  const staff=staffByIdentity(rawId,rawName);
+  return {id:staff?.id||rawId||rawName||'none',name:rawName||staff?.name||(isSale?'Chưa chọn sale':'Chưa chọn kỹ thuật'),staff};
+}
+function commissionRoleIncluded(s={},role='Sale',filter=commissionAppliedFilter||{}){
+  const f=filter||{};
+  if(f.dept&&f.dept!==role)return false;
+  const meta=commissionStaffMeta(s,role);
+  if(f.staffId&&meta.id!==f.staffId)return false;
+  if((f.dept||f.staffId)&&meta.id==='none')return false;
+  const q=searchKey(f.q||'');
+  if(q){
+    const ci=saleCustomerInfo(s);
+    const orderText=searchKey([s.code,ci.name,ci.phone,ci.code,s.customerName,s.customerPhone,s.customerCode,saleItemSummary(s).models].join(' '));
+    if(!orderText.includes(q)&&!searchKey(meta.name).includes(q))return false;
+  }
+  return true;
+}
+function commissionPartsForFilter(s={},filter=commissionAppliedFilter||{}){
+  const includeSale=commissionRoleIncluded(s,'Sale',filter);
+  const includeTech=commissionRoleIncluded(s,'Kỹ thuật',filter);
+  return {includeSale,includeTech,saleCommission:includeSale?saleCommissionValue(s):0,techCost:includeTech?(+s.techCost||0):0,techFuel:includeTech?(+s.techFuel||0):0};
+}
 function commissionFilteredSales(){
   const f=commissionAppliedFilter||{q:'',dept:'',staffId:'',from:'',to:''};
   return commissionEligibleSales().filter(s=>{
@@ -2703,60 +2755,84 @@ function commissionFilteredSales(){
     let d=saleCommissionEarnedAt(s);
     if(f.from && d<f.from) return false;
     if(f.to && d>f.to) return false;
-    if(f.dept==='Sale' && !s.staffId) return false;
-    if(f.dept==='Kỹ thuật' && !s.techId) return false;
-    if(f.staffId){
-      if(f.dept==='Sale' && s.staffId!==f.staffId) return false;
-      if(f.dept==='Kỹ thuật' && s.techId!==f.staffId) return false;
-      if(!f.dept && s.staffId!==f.staffId && s.techId!==f.staffId) return false;
-    }
-    if(f.q){
-      let txt=[s.code,s.customerName,s.customerPhone,s.customerCode,s.staffName,s.techName].join(' ').toLowerCase();
-      if(!txt.includes(f.q)) return false;
-    }
-    return true;
+    const parts=commissionPartsForFilter(s,f);
+    return parts.includeSale||parts.includeTech;
   });
 }
 let incomeActiveTab='sale';
 window.showIncomeTab=(tab)=>{incomeActiveTab=tab||'sale';document.querySelectorAll('.income-tab').forEach(el=>el.style.display='none');document.querySelectorAll('.income-'+incomeActiveTab).forEach(el=>el.style.display='block');};
-function salaryBonusDeductByStaff(from='',to='',staffId=''){const m={};data.salaries.forEach(x=>{if(from&&String(x.date||'')<from)return;if(to&&String(x.date||'')>to)return;const id=x.staffId||x.staffName||'none';if(staffId&&id!==staffId)return;m[id]=m[id]||{bonus:0,deduct:0};m[id].bonus+=+x.bonus||0;m[id].deduct+=+x.deduct||0;});return m;}
-function employeeIncomeRows(){const f=commissionAppliedFilter||{};const sales=commissionFilteredSales();const map={};const add=(id,name)=>{id=id||name||'none';map[id]=map[id]||{id,name:name||'Chưa chọn',saleCommission:0,techCost:0,techFuel:0,bonus:0,deduct:0,total:0};return map[id];};sales.forEach(s=>{add(s.staffId,s.staffName||data.staff.find(x=>x.id===s.staffId)?.name).saleCommission+=saleCommissionValue(s);const t=add(s.techId,s.techName||data.staff.find(x=>x.id===s.techId)?.name);t.techCost+=+s.techCost||0;t.techFuel+=+s.techFuel||0;});const bd=salaryBonusDeductByStaff(f.from,f.to,f.staffId||'');Object.entries(bd).forEach(([id,v])=>{const st=data.staff.find(x=>x.id===id)||{};const r=add(id,st.name||id);r.bonus+=v.bonus;r.deduct+=v.deduct;});return Object.values(map).map(r=>({...r,total:(+r.saleCommission||0)+(+r.techCost||0)+(+r.techFuel||0)+(+r.bonus||0)-(+r.deduct||0)})).sort((a,b)=>b.total-a.total);}
-function techPerformanceRows(){const rows=commissionFilteredSales();const f=commissionAppliedFilter||{};const map={};rows.forEach(s=>{const id=s.techId||'none';const name=s.techName||data.staff.find(x=>x.id===s.techId)?.name||'Chưa chọn kỹ thuật';map[id]=map[id]||{id,name,count:0,qty:0,techCost:0,techFuel:0,warranty:0};map[id].count++;map[id].qty+=(s.items||[]).reduce((a,it)=>a+(+it.qty||0),0);map[id].techCost+=+s.techCost||0;map[id].techFuel+=+s.techFuel||0;});activeWarranties().forEach(w=>{const d=warrantyReportDate(w);if(f.from&&d<f.from)return;if(f.to&&d>f.to)return;const sid=w.techId||'';let id=sid||Object.keys(map).find(k=>map[k].name&&map[k].name===w.techName)||'';if(f.staffId&&id!==f.staffId)return;if(!id)return;map[id]=map[id]||{id,name:w.techName||'Kỹ thuật',count:0,qty:0,techCost:0,techFuel:0,warranty:0};map[id].warranty++;});return Object.values(map).sort((a,b)=>b.count-a.count||b.qty-a.qty);}
+function salaryBonusDeductByStaff(from='',to='',staffId='',q='',dept=''){
+  const m={};
+  data.salaries.forEach(x=>{
+    const d=reportDateValue(x.date||x.salaryDate||x.createdDate||'');
+    if(!d||(from&&d<from)||(to&&d>to))return;
+    const staff=staffByIdentity(x.staffId||'',x.staffName||'');
+    const id=staff?.id||x.staffId||x.staffName||'none';
+    const name=x.staffName||staff?.name||'Chưa chọn';
+    if(staffId&&id!==staffId)return;
+    if(dept&&(!staff||!staffHasFunction(staff,dept)))return;
+    if(q&&!searchKey(name).includes(searchKey(q)))return;
+    m[id]=m[id]||{id,name,bonus:0,deduct:0};
+    m[id].bonus+=+x.bonus||0;
+    m[id].deduct+=+x.deduct||0;
+  });
+  return m;
+}
+function employeeIncomeRows(){
+  const f=commissionAppliedFilter||{},sales=commissionFilteredSales(),map={};
+  const add=(id,name)=>{id=id||name||'none';map[id]=map[id]||{id,name:name||'Chưa chọn',saleCommission:0,techCost:0,techFuel:0,bonus:0,deduct:0,total:0};return map[id];};
+  sales.forEach(s=>{
+    const parts=commissionPartsForFilter(s,f),saleMeta=commissionStaffMeta(s,'Sale'),techMeta=commissionStaffMeta(s,'Kỹ thuật');
+    if(parts.includeSale)add(saleMeta.id,saleMeta.name).saleCommission+=parts.saleCommission;
+    if(parts.includeTech){const t=add(techMeta.id,techMeta.name);t.techCost+=parts.techCost;t.techFuel+=parts.techFuel;}
+  });
+  const bd=salaryBonusDeductByStaff(f.from,f.to,f.staffId||'',f.q||'',f.dept||'');
+  Object.values(bd).forEach(v=>{const r=add(v.id,v.name);r.bonus+=v.bonus;r.deduct+=v.deduct;});
+  return Object.values(map).map(r=>({...r,total:(+r.saleCommission||0)+(+r.techCost||0)+(+r.techFuel||0)+(+r.bonus||0)-(+r.deduct||0)})).sort((a,b)=>b.total-a.total);
+}
+function techPerformanceRows(){
+  const rows=commissionFilteredSales(),f=commissionAppliedFilter||{},map={};
+  if(f.dept==='Sale')return [];
+  rows.forEach(s=>{const parts=commissionPartsForFilter(s,{...f,dept:'Kỹ thuật'});if(!parts.includeTech)return;const meta=commissionStaffMeta(s,'Kỹ thuật'),id=meta.id;map[id]=map[id]||{id,name:meta.name,count:0,qty:0,techCost:0,techFuel:0,warranty:0};map[id].count++;map[id].qty+=(s.items||[]).reduce((a,it)=>a+(+it.qty||0),0);map[id].techCost+=parts.techCost;map[id].techFuel+=parts.techFuel;});
+  activeWarranties().forEach(w=>{const d=warrantyReportDate(w);if(f.from&&d<f.from)return;if(f.to&&d>f.to)return;const staff=staffByIdentity(w.techId||'',w.techName||''),id=staff?.id||w.techId||w.techName||'';if(f.staffId&&id!==f.staffId)return;if(f.q&&!searchKey([w.techName,w.code,w.saleCode,w.customer].join(' ')).includes(searchKey(f.q)))return;if(!id)return;map[id]=map[id]||{id,name:w.techName||staff?.name||'Kỹ thuật',count:0,qty:0,techCost:0,techFuel:0,warranty:0};map[id].warranty++;});
+  return Object.values(map).sort((a,b)=>b.count-a.count||b.qty-a.qty);
+}
 function renderCommissions(){
   if(!$('commissionByStaff')||!$('commissionByOrder'))return;
 
   const rows=commissionFilteredSales();
+  const applied=commissionAppliedFilter||{};
   const bySale={};
   const byTech={};
   let totalRevenue=0,totalCommissionBase=0,totalSurcharge=0,totalDiscount=0,totalSaleCommission=0,totalTechCost=0,totalTechFuel=0;
 
   rows.forEach(s=>{
+    const parts=commissionPartsForFilter(s,applied);
     const commissionBase=saleCommissionBaseValue(s);
-    const saleCommissionAmt=saleCommissionValue(s);
+    const saleCommissionAmt=parts.saleCommission;
     totalRevenue+=+s.grand||0;
-    totalCommissionBase+=commissionBase;
-    totalSurcharge+=+s.surcharge||0;
-    totalDiscount+=+s.discountTotal||0;
+    if(parts.includeSale){totalCommissionBase+=commissionBase;totalSurcharge+=+s.surcharge||0;totalDiscount+=+s.discountTotal||0;}
     totalSaleCommission+=saleCommissionAmt;
-    totalTechCost+=+s.techCost||0;
-    totalTechFuel+=+s.techFuel||0;
-    let saleKey=s.staffId||'none';
-    let saleName=s.staffName||data.staff.find(x=>x.id===s.staffId)?.name||'Chưa chọn sale';
-    bySale[saleKey]=bySale[saleKey]||{id:saleKey,name:saleName,count:0,revenue:0,commissionBase:0,surcharge:0,discount:0,commission:0};
-    bySale[saleKey].count++;
-    bySale[saleKey].revenue+=+s.grand||0;
-    bySale[saleKey].commissionBase+=commissionBase;
-    bySale[saleKey].surcharge+=+s.surcharge||0;
-    bySale[saleKey].discount+=+s.discountTotal||0;
-    bySale[saleKey].commission+=saleCommissionAmt;
-
-    let techKey=s.techId||'none';
-    let techName=s.techName||data.staff.find(x=>x.id===s.techId)?.name||'Chưa chọn kỹ thuật';
-    byTech[techKey]=byTech[techKey]||{name:techName,count:0,revenue:0,techCost:0,techFuel:0};
-    byTech[techKey].count++;
-    byTech[techKey].revenue+=+s.grand||0;
-    byTech[techKey].techCost+=+s.techCost||0;
-    byTech[techKey].techFuel+=+s.techFuel||0;
+    totalTechCost+=parts.techCost;
+    totalTechFuel+=parts.techFuel;
+    if(parts.includeSale){
+      const saleMeta=commissionStaffMeta(s,'Sale'),saleKey=saleMeta.id;
+      bySale[saleKey]=bySale[saleKey]||{id:saleKey,name:saleMeta.name,count:0,revenue:0,commissionBase:0,surcharge:0,discount:0,commission:0};
+      bySale[saleKey].count++;
+      bySale[saleKey].revenue+=+s.grand||0;
+      bySale[saleKey].commissionBase+=commissionBase;
+      bySale[saleKey].surcharge+=+s.surcharge||0;
+      bySale[saleKey].discount+=+s.discountTotal||0;
+      bySale[saleKey].commission+=saleCommissionAmt;
+    }
+    if(parts.includeTech){
+      const techMeta=commissionStaffMeta(s,'Kỹ thuật'),techKey=techMeta.id;
+      byTech[techKey]=byTech[techKey]||{name:techMeta.name,count:0,revenue:0,techCost:0,techFuel:0};
+      byTech[techKey].count++;
+      byTech[techKey].revenue+=+s.grand||0;
+      byTech[techKey].techCost+=parts.techCost;
+      byTech[techKey].techFuel+=parts.techFuel;
+    }
   });
 
   if($('commissionSummary')) $('commissionSummary').innerHTML=`<div>Tổng doanh thu đã thu đủ: <b>${money(totalRevenue)}</b></div><div>Doanh số tính HH: <b>${money(totalCommissionBase)}</b></div><div>Tổng phụ thu: <b>${money(totalSurcharge)}</b></div><div>Tổng chiết khấu: <b>${money(totalDiscount)}</b></div><div>Hoa hồng Sale: <b>${money(totalSaleCommission)}</b></div><div>Công kỹ thuật: <b>${money(totalTechCost)}</b></div><div>Tiền xăng KT: <b>${money(totalTechFuel)}</b></div><div>Tổng chi: <b>${money(totalSaleCommission+totalTechCost+totalTechFuel)}</b></div><div class="muted-small full">Chỉ tính hoa hồng cho phiếu bán đã thu đủ 100%.</div>`;
@@ -2780,7 +2856,7 @@ function renderCommissions(){
   }
   $('commissionByOrder').innerHTML=rows.slice()
     .sort((a,b)=>String(saleCommissionEarnedAt(b)).localeCompare(String(saleCommissionEarnedAt(a))))
-    .map((s,idx)=>{const saleCom=saleCommissionValue(s);const itemSum=saleItemSummary(s);return `<tr><td class="text-center">${idx+1}</td><td>${saleCommissionEarnedAt(s)||''}</td><td>${s.code}</td><td>${saleCustomerInfo(s).name||''}</td><td>${itemSum.models||''}</td><td>${itemSum.qtyText||itemSum.totalQty||''}</td><td>${s.staffName||data.staff.find(x=>x.id===s.staffId)?.name||''}</td><td>${s.techName||data.staff.find(x=>x.id===s.techId)?.name||''}</td><td>${money(s.grand)}</td><td>${money(s.surcharge||0)}</td><td>${money(s.discountTotal||0)}</td><td>${money(saleCommissionBaseValue(s))}</td><td>${s.commissionPercent??0}%</td><td><b>${money(saleCom)}</b></td><td><b>${money(s.techCost||0)}</b></td><td><b>${money(s.techFuel||0)}</b></td><td><b>${money(saleCom+(+s.techCost||0)+(+s.techFuel||0))}</b></td></tr>`})
+    .map((s,idx)=>{const parts=commissionPartsForFilter(s,applied);const itemSum=saleItemSummary(s);return `<tr><td class="text-center">${idx+1}</td><td>${saleCommissionEarnedAt(s)||''}</td><td>${s.code}</td><td>${saleCustomerInfo(s).name||''}</td><td>${itemSum.models||''}</td><td>${itemSum.qtyText||itemSum.totalQty||''}</td><td>${commissionStaffMeta(s,'Sale').name||''}</td><td>${commissionStaffMeta(s,'Kỹ thuật').name||''}</td><td>${money(s.grand)}</td><td>${money(parts.includeSale?(s.surcharge||0):0)}</td><td>${money(parts.includeSale?(s.discountTotal||0):0)}</td><td>${money(parts.includeSale?saleCommissionBaseValue(s):0)}</td><td>${parts.includeSale?(s.commissionPercent??0):0}%</td><td><b>${money(parts.saleCommission)}</b></td><td><b>${money(parts.techCost)}</b></td><td><b>${money(parts.techFuel)}</b></td><td><b>${money(parts.saleCommission+parts.techCost+parts.techFuel)}</b></td></tr>`})
     .join('')||'<tr><td colspan="17">Không có đơn bán theo bộ lọc</td></tr>'; 
   if($('employeeIncomeTable'))$('employeeIncomeTable').innerHTML=employeeIncomeRows().map(r=>`<tr><td><b>${r.name}</b></td><td>${money(r.saleCommission)}</td><td>${money(r.techCost)}</td><td>${money(r.techFuel)}</td><td>${money(r.bonus)}</td><td>${money(r.deduct)}</td><td><b>${money(r.total)}</b></td></tr>`).join('')||'<tr><td colspan="7">Không có dữ liệu thu nhập theo bộ lọc</td></tr>';
   if($('techPerformanceTable'))$('techPerformanceTable').innerHTML=techPerformanceRows().map(r=>`<tr><td><b>${r.name}</b></td><td>${r.count}</td><td>${r.qty}</td><td>${money(r.techCost)}</td><td>${money(r.techFuel)}</td><td>${r.warranty||0}</td></tr>`).join('')||'<tr><td colspan="6">Không có dữ liệu hiệu suất kỹ thuật</td></tr>';
@@ -3652,7 +3728,20 @@ function renderWarrantyReport(){
 }
 window.renderWarrantyReport=renderWarrantyReport;
 
-function reportDateValue(v){return String(v||'').slice(0,10)}
+function reportDateValue(v){
+  if(v===undefined||v===null||v==='')return '';
+  const raw=String(v||'').trim();
+  const iso=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso)return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const vi=raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{4})$/);
+  if(vi)return `${vi[3]}-${String(vi[2]).padStart(2,'0')}-${String(vi[1]).padStart(2,'0')}`;
+  let d=null;
+  if(v instanceof Date)d=v;
+  else if(typeof v?.toDate==='function')d=v.toDate();
+  else if(typeof v==='object'&&Number.isFinite(+v.seconds))d=new Date(+v.seconds*1000);
+  else if(raw)d=new Date(raw);
+  return d&&!Number.isNaN(d.getTime())?isoDateFromLocal(d):'';
+}
 function dateAdd(d,days){let x=new Date(d);x.setDate(x.getDate()+days);return x.toISOString().slice(0,10)}
 function monthStart(d=today()){return String(d).slice(0,7)+'-01'}
 function monthEnd(d=today()){let x=new Date(String(d).slice(0,7)+'-01');x.setMonth(x.getMonth()+1);x.setDate(0);return x.toISOString().slice(0,10)}
@@ -4173,7 +4262,7 @@ function exportRows(type){let rows=[];
   if(type==='warranties')rows=activeWarranties().map(w=>({code:warrantyCode(w),saleCode:w.saleCode||'',customer:w.customer||'',phone:w.phone||'',address:w.address||'',serial:w.serial||'',start:w.start||'',months:w.months||24,end:w.end||'',receiveDate:w.receiveDate||'',receiverName:w.receiverName||'',techName:w.techName||'',priority:w.priority||'',status:w.status||'',reasons:(w.reasons||[]).join(';'),reasonOther:w.reasonOther||'',problem:w.problem||'',result:w.result||'',completeDate:w.completeDate||'',note:w.note||''}));
   if(type==='stockVouchers')rows=activeStockVouchers().flatMap(v=>(v.items||[]).map(it=>({code:v.code,date:v.date,type:v.type,warehouse:voucherWarehouse(v),productCode:it.code,productName:it.name,qty:it.actualQty??it.inputQty??it.qty,cost:it.cost,note:it.note||v.note||''})));
   if(type==='sales')rows=activeSales().map(s=>{const pay=salePaymentInfo(s);return {code:s.code,date:s.date,customerCode:s.customerCode||'',customerName:saleCustomerInfo(s).name,customerPhone:saleCustomerInfo(s).phone||'',staffName:s.staffName,techName:s.techName,vatMode:s.vatMode||'included8',goodsBeforeDiscount:s.goodsBeforeDiscount||0,lineDiscountTotal:s.lineDiscountTotal||0,orderDiscountType:s.orderDiscountType||'none',orderDiscountValue:s.orderDiscountValue||0,orderDiscountTotal:s.orderDiscountTotal||0,discountTotal:s.discountTotal||0,grand:s.grand,paid:pay.paidTotal,debt:pay.debtLeft,directPaidDate:s.directPaidDate||'',commissionEarnedAt:saleCommissionEarnedAt(s),paymentMethod:s.paymentMethod||'',commissionPercent:s.commissionPercent,saleCommission:saleCommissionValue(s),techCost:s.techCost,techFuel:s.techFuel||0,surcharge:s.surcharge||0,profit:saleProfitValue(s),itemsJson:JSON.stringify(s.items||[]),note:s.note||''}});
-  if(type==='commissions')rows=commissionFilteredSales().map(s=>{const saleCom=saleCommissionValue(s);const itemSum=saleItemSummary(s);const pay=salePaymentInfo(s);return {commissionEarnedAt:saleCommissionEarnedAt(s),saleDate:s.date,code:s.code,customer:saleCustomerInfo(s).name,model:itemSum.models,qty:itemSum.totalQty,qtyDetail:itemSum.qtyText,saleStaff:s.staffName,techStaff:s.techName,grand:s.grand,paidTotal:pay.paidTotal,debtLeft:pay.debtLeft,surcharge:s.surcharge||0,discountTotal:s.discountTotal||0,commissionBase:saleCommissionBaseValue(s),commissionPercent:s.commissionPercent??0,saleCommission:saleCom,techCost:s.techCost,techFuel:s.techFuel||0,totalCommission:saleCom+(+s.techCost||0)+(+s.techFuel||0)}});
+  if(type==='commissions')rows=commissionFilteredSales().map(s=>{const parts=commissionPartsForFilter(s),itemSum=saleItemSummary(s),pay=salePaymentInfo(s);return {commissionEarnedAt:saleCommissionEarnedAt(s),saleDate:s.date,code:s.code,customer:saleCustomerInfo(s).name,model:itemSum.models,qty:itemSum.totalQty,qtyDetail:itemSum.qtyText,saleStaff:commissionStaffMeta(s,'Sale').name,techStaff:commissionStaffMeta(s,'Kỹ thuật').name,grand:s.grand,paidTotal:pay.paidTotal,debtLeft:pay.debtLeft,surcharge:parts.includeSale?(s.surcharge||0):0,discountTotal:parts.includeSale?(s.discountTotal||0):0,commissionBase:parts.includeSale?saleCommissionBaseValue(s):0,commissionPercent:parts.includeSale?(s.commissionPercent??0):0,saleCommission:parts.saleCommission,techCost:parts.techCost,techFuel:parts.techFuel,totalCommission:parts.saleCommission+parts.techCost+parts.techFuel}});
   if(type==='debtsSettled')rows=calcSettledDebts().map((d,idx)=>{const ci=customerInfo(d.customer);return {'STT':idx+1,'Phiếu':d.saleCode||'','Khách hàng':ci.name||'','SĐT':ci.phone||'','SL':debtTotalQty(d),'Model':debtGroupProductModels(d)||'','Tổng tiền':d.total||0,'Đã thu':d.paid||0,'Ngày thanh toán':debtSettledDate(d)}});
   if(type==='techPerformance')rows=techPerformanceRows().map(r=>({'Kỹ thuật':r.name,'Số phiếu':r.count,'Số bộ':r.qty,'Công':r.techCost,'Tiền xăng':r.techFuel,'Bảo hành phát sinh':r.warranty||0}));
   if(type==='employeeIncome')rows=employeeIncomeRows().map(r=>({'Nhân viên':r.name,'Hoa hồng Sale':r.saleCommission,'Công kỹ thuật':r.techCost,'Tiền xăng':r.techFuel,'Thưởng':r.bonus,'Phạt':r.deduct,'Tổng thu nhập':r.total}));
@@ -4189,7 +4278,7 @@ function makeWorkbook(sheets){assertExcel();const wb=XLSX.utils.book_new();Objec
 
 function safeSheetName(name){return String(name||'Nhan_vien').replace(/[\/?*\[\]:]/g,' ').slice(0,31)||'Nhan_vien'}
 function commissionExportRowsForSales(rows){
-  return rows.slice().sort((a,b)=>String(saleCommissionEarnedAt(a)).localeCompare(String(saleCommissionEarnedAt(b)))).map((s,idx)=>{const saleCom=saleCommissionValue(s);const pay=salePaymentInfo(s);return {
+  return rows.slice().sort((a,b)=>String(saleCommissionEarnedAt(a)).localeCompare(String(saleCommissionEarnedAt(b)))).map((s,idx)=>{const parts=commissionPartsForFilter(s),pay=salePaymentInfo(s);return {
     STT:idx+1,
     'Ngày đủ 100%':saleCommissionEarnedAt(s),
     'Ngày bán':s.date||'',
@@ -4199,19 +4288,19 @@ function commissionExportRowsForSales(rows){
     'Model':saleItemSummary(s).models,
     'Số lượng':saleItemSummary(s).totalQty,
     'Chi tiết SL':saleItemSummary(s).qtyText,
-    'Sale':s.staffName||data.staff.find(x=>x.id===s.staffId)?.name||'',
-    'Kỹ thuật':s.techName||data.staff.find(x=>x.id===s.techId)?.name||'',
+    'Sale':commissionStaffMeta(s,'Sale').name||'',
+    'Kỹ thuật':commissionStaffMeta(s,'Kỹ thuật').name||'',
     'Tiền hàng':+(s.subtotal||0)||0,
     'Tổng đã thu':pay.paidTotal,
     'Còn nợ':pay.debtLeft,
-    'Phụ thu':+(s.surcharge||0)||0,
-    'Chiết khấu':+(s.discountTotal||0)||0,
-    'Doanh số tính HH':saleCommissionBaseValue(s),
-    '% HH':+(s.commissionPercent||0)||0,
-    'Hoa hồng Sale':saleCom,
-    'Công kỹ thuật':+(s.techCost||0)||0,
-    'Tiền xăng KT':+(s.techFuel||0)||0,
-    'Tổng nhận':saleCom+(+s.techCost||0)+(+s.techFuel||0)
+    'Phụ thu':parts.includeSale?(+(s.surcharge||0)||0):0,
+    'Chiết khấu':parts.includeSale?(+(s.discountTotal||0)||0):0,
+    'Doanh số tính HH':parts.includeSale?saleCommissionBaseValue(s):0,
+    '% HH':parts.includeSale?(+(s.commissionPercent||0)||0):0,
+    'Hoa hồng Sale':parts.saleCommission,
+    'Công kỹ thuật':parts.techCost,
+    'Tiền xăng KT':parts.techFuel,
+    'Tổng nhận':parts.saleCommission+parts.techCost+parts.techFuel
   }});
 }
 function commissionSummaryRows(rows){
@@ -4247,6 +4336,16 @@ window.downloadTemplateExcel=(type)=>{try{const schema=excelSchemas[type];if(!sc
 window.exportAllExcel=()=>{try{const oldFilter=commissionAppliedFilter;commissionAppliedFilter={q:'',dept:'',staffId:canViewAllCommissions()?'':(currentStaffMatchIds()[0]||'__NO_STAFF__'),from:'',to:''};const sheets={};['customers','products','prices','staff','sales','stockVouchers','expenses','salaries','warranties','commissions','stockbook','returns','logs'].forEach(t=>{sheets[excelSchemas[t]?.sheet||t]=exportRows(t)});commissionAppliedFilter=oldFilter;const wb=makeWorkbook(sheets);XLSX.writeFile(wb,`Similock_Da_Nang_Toan_bo_${today()}.xlsx`);}catch(err){alert(err.message)}};
 function rowsFromCsvText(text){const rows=parseCSV(text);if(rows.length<2)return[];const heads=rows.shift().map(x=>x.trim());return rows.map(r=>{let o={};heads.forEach((h,i)=>o[h]=r[i]??'');return o})}
 async function readImportRows(file){if(/\.csv$/i.test(file.name))return rowsFromCsvText(await file.text());assertExcel();const buf=await file.arrayBuffer();const wb=XLSX.read(buf,{type:'array',cellDates:false});const ws=wb.Sheets[wb.SheetNames[0]];return XLSX.utils.sheet_to_json(ws,{defval:''});}
+function normalizeImportDate(v,fallback=''){
+  if(v===undefined||v===null||v==='')return fallback;
+  const n=typeof v==='number'?v:(/^\d+(\.\d+)?$/.test(String(v).trim())?Number(v):NaN);
+  if(Number.isFinite(n)&&n>=20000&&n<=90000){
+    const d=new Date(Date.UTC(1899,11,30)+Math.floor(n)*86400000);
+    return d.toISOString().slice(0,10);
+  }
+  const d=reportDateValue(v);
+  return validateDate(d)?d:'';
+}
 window.importExcel=async(e,type)=>{
   let file=e.target.files[0];if(!file)return;
   let rows=[];try{rows=await readImportRows(file)}catch(err){alert('Không đọc được file Excel/CSV: '+err.message);return}
@@ -4256,6 +4355,7 @@ window.importExcel=async(e,type)=>{
   const existingByCode=new Map(data.products.map(x=>[String(x.code||'').toUpperCase(),x]));
   const existingStaff=new Map(data.staff.map(x=>[String(x.name||'').trim().toLowerCase(),x]));
   const existingPriceKey=new Map(data.prices.map(x=>[`${String(x.code||'').toUpperCase()}|${x.type}|${x.validFrom||''}|${x.validTo||''}`,x]));
+  const existingSalaryKey=new Map(data.salaries.map(x=>[`${reportDateValue(x.date)}|${x.staffId||searchKey(x.staffName||'')}`,x]));
   const stockGroup=new Map();
   for(let r=0;r<rows.length;r++){
     let obj={...rows[r]};
@@ -4292,6 +4392,19 @@ window.importExcel=async(e,type)=>{
         if(obj.functions.includes('Sale')||obj.functions.includes('Quản lý')){if(commissionMissing)obj.commissionPercent=5}else obj.commissionPercent=0;
         if(obj.functions.includes('Kỹ thuật')){if(techFeeMissing)obj.techFee=100000}else obj.techFee=0;
         const key=obj.name.toLowerCase();if(existingStaff.has(key)) await updateDoc(doc(db,'staff',existingStaff.get(key).id),obj);else await addDoc(col('staff'),obj);
+      }else if(type==='salaries'){
+        const date=normalizeImportDate(obj.date||obj['Ngày']||obj['Ngay']||'');
+        const staffName=String(obj.staffName||obj['Nhân viên']||obj['Nhan vien']||'').trim();
+        const staff=data.staff.find(x=>x.id===obj.staffId)||existingStaff.get(staffName.toLowerCase())||staffByIdentity('',staffName)||{};
+        const base=safeNum(obj.base??obj['Lương cơ bản']??obj['Luong co ban']);
+        const allowance=safeNum(obj.allowance??obj['Phụ cấp']??obj['Phu cap']);
+        const bonus=safeNum(obj.bonus??obj['Thưởng']??obj['Thuong']);
+        const deduct=safeNum(obj.deduct??obj['Khấu trừ']??obj['Khau tru']);
+        if(!date||!staff.id){skip++;errors.push(`Dòng ${r+2}: ngày không hợp lệ hoặc nhân viên chưa có trong danh mục`);continue;}
+        if([base,allowance,bonus,deduct].some(x=>x<0)){skip++;errors.push(`Dòng ${r+2}: các khoản lương không được âm`);continue;}
+        const salary={date,staffId:staff.id,staffName:staff.name||staffName,base,allowance,bonus,deduct,total:base+allowance+bonus-deduct,note:String(obj.note||obj['Ghi chú']||obj['Ghi chu']||''),updatedAt:serverTimestamp()};
+        const key=`${date}|${staff.id}`;
+        if(existingSalaryKey.has(key))await updateDoc(doc(db,'salaries',existingSalaryKey.get(key).id),salary);else await addDoc(col('salaries'),{...salary,createdAt:serverTimestamp()});
       }else if(type==='expenses'){
         obj.date=String(obj.date||today());obj.category=obj.category||'Khác';obj.amount=safeNum(obj.amount);obj.note=obj.note||'';
         if(!validateDate(obj.date)||obj.amount<=0){skip++;errors.push(`Dòng ${r+2}: ngày không hợp lệ hoặc số tiền phải lớn hơn 0`);continue}
@@ -4307,7 +4420,7 @@ window.importExcel=async(e,type)=>{
         if(!o.code||o.cost<=0){skip++;continue;}
         await addDoc(col('costPrices'),o);ok++;continue;
       }
-      if(type==='stockVouchers'){
+      else if(type==='stockVouchers'){
         const code=String(obj.code||nextCode(prefixByStockType(obj.type||'IN'),data.stockVouchers)).trim();
         const key=code+'|'+(obj.type||'IN')+'|'+(obj.date||today())+'|'+(obj.warehouse||defaultWarehouse());
         const item={code:String(obj.productCode||obj.codeProduct||'').trim().toUpperCase(),name:obj.productName||obj.name||'',qty:safeNum(obj.qty),cost:safeNum(obj.cost),note:obj.note||''};
@@ -4361,7 +4474,7 @@ window.importCSV=(e,type)=>window.importExcel(e,type);
 
 
 window.exportBackup=()=>{
-  const pack={exportedAt:new Date().toISOString(),customers:data.customers,products:data.products,prices:data.prices,staff:data.staff,sales:data.sales,stockVouchers:data.stockVouchers,receipts:data.receipts,warranties:data.warranties,warrantyReasons:data.warrantyReasons,systemCategories:data.systemCategories,expenses:data.expenses,salaries:data.salaries,users:data.users,logs:data.logs,version:'v107'};
+  const pack={exportedAt:new Date().toISOString(),customers:data.customers,products:data.products,prices:data.prices,staff:data.staff,sales:data.sales,stockVouchers:data.stockVouchers,receipts:data.receipts,warranties:data.warranties,warrantyReasons:data.warrantyReasons,systemCategories:data.systemCategories,expenses:data.expenses,salaries:data.salaries,users:data.users,logs:data.logs,version:'v109'};
   let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(pack,null,2)],{type:'application/json'}));a.download='similock-da-nang-backup-'+today()+'.json';a.click()
 }
 
