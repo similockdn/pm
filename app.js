@@ -1109,6 +1109,34 @@ function dashboardRangeDates(){
   return {from:fmt(from),to:todayStr,label};
 }
 function monthKey(d){return String(d||'').slice(0,7)}
+function isoLocalDate(v){
+  const m=String(v||'').slice(0,10).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if(!m)return new Date();
+  return new Date(+m[1],+m[2]-1,+m[3]);
+}
+function isoDateFromLocal(d){
+  const pad=n=>String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+function dashboardWeekSalesRows(referenceDate=today()){
+  const ref=isoLocalDate(referenceDate);
+  const monday=new Date(ref.getFullYear(),ref.getMonth(),ref.getDate());
+  monday.setDate(monday.getDate()+(monday.getDay()===0?-6:1-monday.getDay()));
+  const names=['T2','T3','T4','T5','T6','T7','CN'];
+  const rows=names.map((name,i)=>{
+    const d=new Date(monday.getFullYear(),monday.getMonth(),monday.getDate()+i);
+    const key=isoDateFromLocal(d);
+    return {key,label:`${name} ${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`,value:0,count:0};
+  });
+  const byDate=Object.fromEntries(rows.map(r=>[r.key,r]));
+  activeSales().forEach(s=>{
+    const row=byDate[String(s.date||'').slice(0,10)];
+    if(!row)return;
+    row.value+=Math.max(0,+s.grand||0);
+    row.count++;
+  });
+  return rows;
+}
 function sumStockValue(){return data.products.reduce((a,p)=>a+(stockOf(p.code)*(costFor(p.code,today())||+p.cost||0)),0)}
 function renderDashboard(){
   const range=dashboardRangeDates();
@@ -1161,7 +1189,11 @@ function renderDashboard(){
   const incomeSales=commissionEligibleSales().filter(s=>{const d=saleCommissionEarnedAt(s);return d>=range.from&&d<=range.to});
   const incomeSale=incomeSales.reduce((a,s)=>a+saleCommissionValue(s),0);
   const incomeTech=incomeSales.reduce((a,s)=>a+(+s.techCost||0)+(+s.techFuel||0),0);
+  const weekSales=dashboardWeekSalesRows(today());
+  const weekRevenue=weekSales.reduce((a,x)=>a+(+x.value||0),0);
+  const weekOrders=weekSales.reduce((a,x)=>a+(+x.count||0),0);
   renderChartHtml('dashboardCharts',
+    modernBarChart('Doanh số từng ngày trong tuần',weekSales,{sub:`Tuần hiện tại · ${weekOrders} phiếu bán`,money:true,limit:7,badge:compactMoney(weekRevenue)})+
     modernLineChart('Doanh số 12 tháng',last12.map(x=>({label:x.label,value:x.value})),{sub:'Xu hướng doanh số theo phiếu bán',money:true,badge:compactMoney(last12.reduce((a,x)=>a+x.value,0))})+
     modernDonutChart('Cơ cấu công nợ',debtPie,{sub:'Tình trạng thu tiền theo phiếu'})+
     modernBarChart('Top model bán chạy',productRows.map(x=>({label:x.code,value:x.qty})),{sub:'Số lượng bán trong '+range.label,limit:8})+
@@ -1902,21 +1934,25 @@ function saleCollectedInRange(s={},from='',to=''){
 }
 function salePaymentInfo(s){
   if(isSaleCanceled(s))return {paidTotal:0,debtLeft:0,paymentStatus:'Đã hủy'};
-  const grand=+s.grand||0;
+  // Đối chiếu tiền VND theo số nguyên hiển thị trên chứng từ để sai số thập phân
+  // rất nhỏ không làm một phiếu đã thu đủ bị treo công nợ/hoa hồng.
+  const grand=Math.max(0,Math.round(+s.grand||0));
   const paidAtSale=saleDirectPaid(s);
   const receiptPaid=receiptsForSalePayment(s).reduce((a,r)=>a+(+r.amount||0),0);
   const refunded=saleRefundVouchers(s).reduce((a,v)=>a+(+v.refundAmount||0),0);
-  const paidTotal=Math.max(0,paidAtSale+receiptPaid-refunded);
+  const paidTotal=Math.max(0,Math.round(paidAtSale+receiptPaid-refunded));
   const debtLeft=Math.max(0,grand-paidTotal);
   const paymentStatus=debtLeft<=0?'Đã thu tiền':(paidTotal>0?'Thanh toán một phần':'Chưa thu tiền');
   return {paidTotal,debtLeft,paymentStatus,refunded};
 }
 function saleFullyPaidForCommission(s={}){
   if(isSaleCanceled(s)) return false;
-  const grand=+s.grand||0;
+  const grand=Math.max(0,Math.round(+s.grand||0));
   if(grand<=0) return false;
   const pay=salePaymentInfo(s);
-  return (+pay.paidTotal||0)>=grand && (+pay.debtLeft||0)<=0;
+  // Không tin paidTotal/debtLeft lưu sẵn. Chỉ dùng khoản thu trực tiếp có khóa
+  // đúng phiếu + phiếu thu còn hiệu lực - số tiền đã hoàn.
+  return Math.round(+pay.paidTotal||0)>=grand && Math.round(+pay.debtLeft||0)<=0;
 }
 function salePaymentEvents(s={}){
   const events=[];
@@ -1928,11 +1964,11 @@ function salePaymentEvents(s={}){
 }
 function saleCommissionEarnedAt(s={}){
   if(!saleFullyPaidForCommission(s))return '';
-  const grand=+s.grand||0;
+  const grand=Math.max(0,Math.round(+s.grand||0));
   let running=0,earnedAt='';
   salePaymentEvents(s).forEach(e=>{
     const before=running;
-    running=Math.max(0,running+(+e.amount||0));
+    running=Math.max(0,Math.round(running+(+e.amount||0)));
     if(before<grand&&running>=grand)earnedAt=e.date;
     if(running<grand)earnedAt='';
   });
@@ -2384,8 +2420,21 @@ window.saveSale=async()=>{let customer=findCustomerBySearch();if(!customer){quic
 window.saveSaleAndPrint=async()=>{const id=await saveSale(); if(id) setTimeout(()=>printSale(id),600)}
 function renderSales(){
   let q=($('saleSearch')?.value||'').toLowerCase();
+  const month=String($('saleMonthFilter')?.value||'').slice(0,7);
+  let from=String($('saleFromFilter')?.value||'').slice(0,10);
+  let to=String($('saleToFilter')?.value||'').slice(0,10);
+  if(month){
+    const [y,m]=month.split('-').map(Number);
+    from=`${month}-01`;
+    to=isoDateFromLocal(new Date(y,m,0));
+  }
+  if(from&&to&&from>to){const old=from;from=to;to=old;}
   const rows=data.sales
     .filter(s=>(s.code+(s.customerCode||'')+s.customerName+(s.customerPhone||'')+(s.customerType||'')+(s.cancelReason||'')+(saleItemSummary(s).models||'')).toLowerCase().includes(q))
+    .filter(s=>{
+      const d=String(s.date||'').slice(0,10);
+      return (!from||d>=from)&&(!to||d<=to);
+    })
     .sort((a,b)=>{
       const ta=isSaleToday(a)?1:0, tb=isSaleToday(b)?1:0;
       if(ta!==tb) return tb-ta; // phiếu hôm nay luôn lên đầu
@@ -2398,7 +2447,8 @@ function renderSales(){
   const totalPaid=rows.reduce((a,s)=>a+(isSaleCanceled(s)?0:salePaymentInfo(s).paidTotal),0);
   const totalDebt=rows.reduce((a,s)=>a+(isSaleCanceled(s)?0:salePaymentInfo(s).debtLeft),0);
   const todayCount=rows.filter(isSaleToday).length;
-  if($('saleListHint'))$('saleListHint').innerHTML=`${todayCount?`<span class="sale-new-count">${todayCount} phiếu hôm nay</span>`:'Không có phiếu mới hôm nay'} · Danh sách đã ưu tiên phiếu hôm nay lên trước.`;
+  const dateLabel=month?`Tháng ${month.split('-').reverse().join('/')}`:(from||to?`${from?'Từ '+from.split('-').reverse().join('/'):''}${from&&to?' đến ':''}${to?(!from?'Đến ':'')+to.split('-').reverse().join('/'):''}`:'Tất cả ngày bán');
+  if($('saleListHint'))$('saleListHint').innerHTML=`${todayCount?`<span class="sale-new-count">${todayCount} phiếu hôm nay</span>`:'Không có phiếu hôm nay trong kết quả'} · ${htmlesc(dateLabel)}.`;
   $('saleTable').innerHTML=rows.map((s,idx)=>{
     const canceled=isSaleCanceled(s);
     const isNew=isSaleToday(s);
@@ -2430,6 +2480,24 @@ function renderSales(){
     </tr>`}).join('')||'<tr><td colspan="16">Chưa có phiếu bán</td></tr>';
   if($('saleListSummary'))$('saleListSummary').innerHTML=`<div><span>Tổng phiếu</span><b>${rows.length}</b></div><div><span>Phiếu hôm nay</span><b>${todayCount}</b></div><div><span>Tổng bộ khóa</span><b>${totalQty}</b></div><div><span>Doanh số</span><b>${money(totalGrand)}</b></div><div><span>Đã thu</span><b>${money(totalPaid)}</b></div><div><span>Còn nợ</span><b class="${totalDebt>0?'text-danger':''}">${money(totalDebt)}</b></div>`;
 }
+window.saleListMonthChanged=()=>{
+  if($('saleMonthFilter')?.value){if($('saleFromFilter'))$('saleFromFilter').value='';if($('saleToFilter'))$('saleToFilter').value='';}
+  renderSales();
+};
+window.saleListDateChanged=()=>{
+  if($('saleFromFilter')?.value||$('saleToFilter')?.value){if($('saleMonthFilter'))$('saleMonthFilter').value='';}
+  renderSales();
+};
+window.setSaleListToday=()=>{
+  if($('saleMonthFilter'))$('saleMonthFilter').value='';
+  if($('saleFromFilter'))$('saleFromFilter').value=today();
+  if($('saleToFilter'))$('saleToFilter').value=today();
+  renderSales();
+};
+window.resetSaleListFilters=()=>{
+  ['saleSearch','saleMonthFilter','saleFromFilter','saleToFilter'].forEach(id=>{if($(id))$(id).value='';});
+  renderSales();
+};
 
 window.viewSaleDetail=id=>{
   const s=data.sales.find(x=>x.id===id); if(!s)return;
