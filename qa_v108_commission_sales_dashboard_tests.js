@@ -54,6 +54,7 @@ const ctx={
   debtClean:v=>String(v||'').trim().toLowerCase(),
   debtAddressKey:v=>String(v||'').trim().toLowerCase().replace(/\s+/g,' '),
   costFor:()=>0,
+  saleRevenueRecognitionDate:s=>String(s?.date||'').slice(0,10),
   today:()=> '2026-08-01',
   uid:()=> 'UID',
   $:id=>id==='saleTech'?{value:'T1'}:null
@@ -177,6 +178,6 @@ const html=fs.readFileSync('index.html','utf8');
 assert(html.includes('Ngày thu đủ 100%'),'Bảng hoa hồng phải hiển thị ngày thu đủ');
 assert(html.includes('<option>Công ty</option>'),'Phiếu bán phải hỗ trợ khách Công ty');
 assert(html.includes('id="saleMonthFilter"')&&html.includes('id="saleFromFilter"')&&html.includes('id="saleToFilter"'),'Danh sách phiếu bán phải có lọc tháng và khoảng ngày');
-assert(src.includes("Doanh số từng ngày trong tuần"),'Dashboard phải có biểu đồ doanh số từng ngày trong tuần');
+assert(src.includes("Doanh thu ghi nhận từng ngày"),'Dashboard phải có biểu đồ doanh thu ghi nhận từng ngày trong tuần');
 
 console.log('V108 commission, sales date filter and weekly dashboard tests OK');
