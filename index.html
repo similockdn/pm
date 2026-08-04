@@ -106,8 +106,11 @@
         </div>
 
         <div class="dash-v8-kpis dash-kpi-grid">
-          <div class="dash-v8-kpi revenue"><div class="kpi-icon">💰</div><div><span>Doanh thu ghi nhận</span><b id="kpiRevenue">0</b><small id="dashRevenueNote">Đã lắp và thu đủ 100%</small></div></div>
-          <div class="dash-v8-kpi profit view-cost" id="kpiProfitCard"><div class="kpi-icon">📈</div><div><span>Lợi nhuận</span><b id="kpiProfit">0</b><small>Sau giá vốn & chi phí</small></div></div>
+          <div class="dash-v8-kpi revenue"><div class="kpi-icon">💰</div><div><span>Tổng doanh thu</span><b id="kpiRevenue">0</b><small id="dashRevenueNote">Phiếu đã thu đủ 100%</small></div></div>
+          <div class="dash-v8-kpi profit view-cost"><div class="kpi-icon">➖</div><div><span>Doanh thu sau chi phí</span><b id="kpiRevenueAfterExpense">0</b><small>Trừ giá vốn, kỹ thuật, phiếu chi và lương</small></div></div>
+          <div class="dash-v8-kpi profit view-cost"><div class="kpi-icon">％</div><div><span>Doanh thu sau hoa hồng</span><b id="kpiRevenueAfterCommission">0</b><small>Trừ hoa hồng Sale</small></div></div>
+          <div class="dash-v8-kpi profit view-cost"><div class="kpi-icon">🧮</div><div><span>Sau chi phí + hoa hồng</span><b id="kpiRevenueAfterExpenseCommission">0</b><small>Đối chiếu công thức ròng</small></div></div>
+          <div class="dash-v8-kpi profit view-cost" id="kpiProfitCard"><div class="kpi-icon">📈</div><div><span>Lợi nhuận</span><b id="kpiProfit">0</b><small>Sau giá vốn, hoa hồng, kỹ thuật & chi phí</small></div></div>
           <div class="dash-v8-kpi debt"><div class="kpi-icon">💳</div><div><span>Công nợ</span><b id="kpiDebt">0</b><small><i id="kpiDebtCount">0</i> phiếu đang nợ</small></div></div>
           <div class="dash-v8-kpi overdue"><div class="kpi-icon">⚠️</div><div><span>Quá hạn</span><b id="kpiOverdueCount">0</b><small>Cần xử lý</small></div></div>
           <div class="dash-v8-kpi orders"><div class="kpi-icon">🧾</div><div><span>Đơn hàng</span><b id="dashOrderCount">0</b><small id="dashOrderNote">Trong kỳ lọc</small></div></div>
@@ -603,7 +606,7 @@
         </div>
 
         <div class="panel wide report-section report-section-revenue">
-          <div class="panel-head"><h3>📊 Doanh thu ghi nhận theo thời gian</h3><span>Chỉ đơn đã lắp và thu đủ 100%</span></div>
+          <div class="panel-head"><h3>📊 Doanh thu ghi nhận theo thời gian</h3><span>Chỉ phiếu đã thu đủ 100%, theo ngày thu đủ</span></div>
           <table><thead><tr><th>Mốc ghi nhận</th><th>Số đơn</th><th>Số lượng SP</th><th>Doanh thu</th><th>Phụ thu</th><th>Đã thu theo đơn</th><th>Còn nợ</th><th class="view-cost">HH dự kiến theo đơn</th><th class="view-cost">Công + xăng KT</th><th class="view-cost">Lợi nhuận đơn</th></tr></thead><tbody id="reportRevenueTable"></tbody></table>
         </div>
 

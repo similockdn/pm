@@ -644,11 +644,35 @@ function saleExpectedCommissionValue(s){
   return Math.max(0,+s?.expectedSaleCommission||+s?.saleCommission||0);
 }
 function saleCommissionValue(s){return saleFullyPaidForCommission(s)?saleExpectedCommissionValue(s):0}
-function saleProfitValue(s){
+function saleCostValue(s){
   if(isSaleCanceled(s))return 0;
   const storedCost=Number(s?.cost);
   const hasStoredCost=s?.cost!==undefined&&s?.cost!==null&&String(s.cost)!==''&&Number.isFinite(storedCost)&&storedCost>=0;
-  const cost=hasStoredCost?storedCost:((s?.items||[]).reduce((a,it)=>a+costFor(it.code,s.date||today())*(+it.qty||0),0));
+  return hasStoredCost?storedCost:((s?.items||[]).reduce((a,it)=>a+costFor(it.code,s.date||today())*(+it.qty||0),0));
+}
+function saleOrderNonCommissionExpenseValue(s){
+  if(isSaleCanceled(s))return 0;
+  // Chi phí của đơn không gồm hoa hồng Sale để các chỉ tiêu sau khấu trừ
+  // luôn có thể đối chiếu theo công thức: Doanh thu - Chi phí - Hoa hồng.
+  return saleCostValue(s)+(+s?.techCost||0)+(+s?.techFuel||0);
+}
+function revenueDeductionMetrics(sales=[],expenses=[],salaries=[]){
+  const revenue=sales.reduce((a,s)=>a+(+s?.grand||0),0);
+  const orderExpense=sales.reduce((a,s)=>a+saleOrderNonCommissionExpenseValue(s),0);
+  const operatingExpense=expenses.reduce((a,e)=>a+(+e?.amount||0),0);
+  const salaryExpense=salaries.reduce((a,e)=>a+(+e?.total||+e?.amount||0),0);
+  const expense=orderExpense+operatingExpense+salaryExpense;
+  const commission=sales.reduce((a,s)=>a+saleCommissionValue(s),0);
+  return {
+    revenue,orderExpense,operatingExpense,salaryExpense,expense,commission,
+    afterExpense:revenue-expense,
+    afterCommission:revenue-commission,
+    afterExpenseCommission:revenue-expense-commission
+  };
+}
+function saleProfitValue(s){
+  if(isSaleCanceled(s))return 0;
+  const cost=saleCostValue(s);
   // Lợi nhuận đơn hàng dùng chi phí dự kiến theo đơn, không phụ thuộc thời điểm khách trả tiền.
   return saleCommissionBaseValue(s)-cost-saleExpectedCommissionValue(s)-(+s?.techCost||0)-(+s?.techFuel||0);
 }
@@ -1155,8 +1179,8 @@ function renderDashboard(){
   // V105-WORKFLOW-STABLE:
   // Quy tắc nghiệp vụ chốt: Doanh số, Thu theo đơn và Tiền vào quỹ là 3 chỉ số khác nhau.
   //
-  // Doanh thu = tổng giá trị các Phiếu bán đã lắp và đã thu đủ 100%,
-  // theo ngày điều kiện sau cùng hoàn tất (ngày lắp hoặc ngày thu đủ).
+  // Doanh thu = tổng giá trị các Phiếu bán đã thu đủ 100%,
+  // theo ngày khoản thu làm số tiền lũy kế của phiếu đạt đủ 100%.
   // Thu theo đơn = số tiền đã thu cho chính các Phiếu bán có ngày bán trong kỳ lọc.
   // Sổ quỹ = dòng tiền thực tế theo ngày chứng từ thu/chi.
   // Hai chỉ số này KHÔNG dùng chung công thức vì Sổ quỹ có thể gồm thu công nợ cũ hoặc khoản thu ngoài kỳ bán.
@@ -1166,12 +1190,16 @@ function renderDashboard(){
   const orderProfit=salesInRange.reduce((a,s)=>a+saleProfitValue(s),0);
   const monthlyExpenses=data.expenses.filter(e=>String(e.date||'')>=range.from&&String(e.date||'')<=range.to&&!isSalaryCategory(e.category));
   const monthlySalaries=data.salaries.filter(e=>String(e.date||'')>=range.from&&String(e.date||'')<=range.to);
+  const revenueMetrics=revenueDeductionMetrics(salesInRange,monthlyExpenses,monthlySalaries);
   const expense=monthlyExpenses.reduce((a,e)=>a+(+e.amount||0),0)+monthlySalaries.reduce((a,e)=>a+(+e.total||+e.amount||0),0);
   const profit=orderProfit-expense;
   const debt=activeDebtRows.reduce((a,d)=>a+d.debt,0);
   const low=data.products.filter(p=>stockOf(p.code)<=(+p.minStock||3)).sort((a,b)=>stockOf(a.code)-stockOf(b.code));
   const warranties=activeWarranties().filter(w=>String(w.date||w.createdDate||w.createdAt||'')>=range.from&&String(w.date||w.createdDate||w.createdAt||'')<=range.to);
   if($('kpiRevenue'))$('kpiRevenue').textContent=money(rev);
+  if($('kpiRevenueAfterExpense'))$('kpiRevenueAfterExpense').textContent=money(revenueMetrics.afterExpense);
+  if($('kpiRevenueAfterCommission'))$('kpiRevenueAfterCommission').textContent=money(revenueMetrics.afterCommission);
+  if($('kpiRevenueAfterExpenseCommission'))$('kpiRevenueAfterExpenseCommission').textContent=money(revenueMetrics.afterExpenseCommission);
   if($('kpiProfit'))$('kpiProfit').textContent=money(profit);
   if($('kpiDebt'))$('kpiDebt').textContent=money(debt);
   if($('kpiDebtCount'))$('kpiDebtCount').textContent=activeDebtRows.length;
@@ -1183,7 +1211,7 @@ function renderDashboard(){
   if($('dashOrderCount'))$('dashOrderCount').textContent=orderSalesInRange.length;
   if($('dashStockValue'))$('dashStockValue').textContent=compactMoney(sumStockValue());
   if($('dashWarrantyCount'))$('dashWarrantyCount').textContent=warranties.length;
-  if($('dashRevenueNote'))$('dashRevenueNote').textContent=`${range.label} · Đã lắp & thu đủ`;
+  if($('dashRevenueNote'))$('dashRevenueNote').textContent=`${range.label} · Phiếu đã thu đủ 100%`;
   if($('dashOrderNote'))$('dashOrderNote').textContent=range.label;
 
   const last12=[];const now=new Date();
@@ -1200,8 +1228,8 @@ function renderDashboard(){
   const weekRevenue=weekSales.reduce((a,x)=>a+(+x.value||0),0);
   const weekOrders=weekSales.reduce((a,x)=>a+(+x.count||0),0);
   renderChartHtml('dashboardCharts',
-    modernBarChart('Doanh thu ghi nhận từng ngày',weekSales,{sub:`Tuần hiện tại · ${weekOrders} đơn đã lắp và thu đủ`,money:true,limit:7,badge:compactMoney(weekRevenue)})+
-    modernLineChart('Doanh thu ghi nhận 12 tháng',last12.map(x=>({label:x.label,value:x.value})),{sub:'Theo ngày hoàn tất lắp đặt và thu đủ 100%',money:true,badge:compactMoney(last12.reduce((a,x)=>a+x.value,0))})+
+    modernBarChart('Doanh thu ghi nhận từng ngày',weekSales,{sub:`Tuần hiện tại · ${weekOrders} đơn đã thu đủ 100%`,money:true,limit:7,badge:compactMoney(weekRevenue)})+
+    modernLineChart('Doanh thu ghi nhận 12 tháng',last12.map(x=>({label:x.label,value:x.value})),{sub:'Theo ngày khoản thu làm phiếu đạt đủ 100%',money:true,badge:compactMoney(last12.reduce((a,x)=>a+x.value,0))})+
     modernDonutChart('Cơ cấu công nợ',debtPie,{sub:'Tình trạng thu tiền theo phiếu'})+
     modernBarChart('Top model bán chạy',productRows.map(x=>({label:x.code,value:x.qty})),{sub:'Số lượng bán trong '+range.label,limit:8})+
     modernBarChart('Tồn kho theo model',stockRows.map(x=>({label:x.label,value:x.value})),{sub:'Top model còn tồn nhiều nhất',limit:8})+
@@ -2032,14 +2060,12 @@ function saleInstallationCompletedAt(s={}){
   return String(voucher?.date||s.date||'').slice(0,10);
 }
 function saleRevenueRecognitionDate(s={}){
-  // V111: Doanh thu chỉ phát sinh khi đơn đồng thời đã lắp và đã thu đủ 100%.
-  // Ngày ghi nhận là ngày điều kiện sau cùng hoàn tất, tránh đưa đơn cọc/chưa lắp
-  // vào tháng bán hoặc hồi tố về tháng đã cọc trước khi hoàn thành lắp đặt.
-  if(isSaleCanceled(s)||!saleIsInstalled(s)||!saleFullyPaidForCommission(s))return '';
-  const installedAt=saleInstallationCompletedAt(s);
+  // V112: Tổng doanh thu chỉ phát sinh khi các khoản thu gắn đúng phiếu bán
+  // đã làm phiếu đó đạt đủ 100%. Trạng thái lắp đặt không làm thay đổi doanh thu.
+  // Ngày ghi nhận chính là ngày khoản thu làm số tiền lũy kế đạt 100%.
+  if(isSaleCanceled(s)||!saleFullyPaidForCommission(s))return '';
   const fullyPaidAt=saleCommissionEarnedAt(s);
-  if(!installedAt||!fullyPaidAt)return '';
-  return installedAt>fullyPaidAt?installedAt:fullyPaidAt;
+  return fullyPaidAt||'';
 }
 function revenueRecognizedSalesInRange(from='',to=''){
   return activeSales().filter(s=>{
@@ -4053,16 +4079,17 @@ function renderReports(){
   if(currentReportTab==='warranty')renderWarrantyReports(from,to);
   const productQ=($('reportProductSearch')?.value||'').trim().toLowerCase();
   const sales=revenueRecognizedSalesInRange(from,to);
-  const pendingDepositSales=activeSales().filter(s=>!saleIsInstalled(s)&&salePaymentInfo(s).paidTotal>0&&saleCollectedInRange(s,from,to)>0);
+  const pendingDepositSales=activeSales().filter(s=>!saleFullyPaidForCommission(s)&&salePaymentInfo(s).paidTotal>0&&saleCollectedInRange(s,from,to)>0);
   const pendingDepositCollected=pendingDepositSales.reduce((a,s)=>a+saleCollectedInRange(s,from,to),0);
   const expenses=data.expenses.filter(e=>inReportRange(e.date,from,to)&&!isSalaryCategory(e.category));
   const salaries=data.salaries.filter(e=>inReportRange(e.date,from,to));
-  const rev=sales.reduce((a,s)=>a+(+s.grand||0),0);
+  const revenueMetrics=revenueDeductionMetrics(sales,expenses,salaries);
+  const rev=revenueMetrics.revenue;
   const revenueBeforeVat=sales.reduce((a,s)=>a+calcCommissionBase(s),0);
   // Công nợ/đã thu phải lấy theo phân bổ phiếu thu hiện tại, không chỉ lấy số tiền nhập lúc tạo đơn.
   const paid=sales.reduce((a,s)=>a+(+salePaymentInfo(s).paidTotal||0),0);
   const debt=sales.reduce((a,s)=>a+(+salePaymentInfo(s).debtLeft||0),0);
-  const totalCost=sales.reduce((a,s)=>{const stored=Number(s.cost);const hasStored=s.cost!==undefined&&s.cost!==null&&String(s.cost)!==''&&Number.isFinite(stored)&&stored>=0;return a+(hasStored?stored:((s.items||[]).reduce((b,it)=>b+costFor(it.code,s.date||today())*(+it.qty||0),0)));},0);
+  const totalCost=sales.reduce((a,s)=>a+saleCostValue(s),0);
   const grossMargin=revenueBeforeVat-totalCost;
   // Lợi nhuận đơn dùng hoa hồng dự kiến theo ngày bán; thu nhập thực nhận dùng ngày thu đủ 100%.
   const projectedComm=sales.reduce((a,s)=>a+saleExpectedCommissionValue(s),0);
@@ -4079,11 +4106,14 @@ function renderReports(){
   const surchargeTotal=sales.reduce((a,s)=>a+(+s.surcharge||0),0);
   const qty=sales.reduce((a,s)=>a+(s.items||[]).reduce((b,it)=>b+(+it.qty||0),0),0);
   $('reportBox').innerHTML=`
-    <div class="report-card">Doanh thu ghi nhận<small>${from} → ${to} · Đã lắp & thu đủ</small><b>${money(rev)}</b></div>
+    <div class="report-card">Tổng doanh thu<small>${from} → ${to} · Phiếu đã thu đủ 100%</small><b>${money(rev)}</b></div>
+    <div class="report-card view-cost">Doanh thu sau chi phí<b>${money(revenueMetrics.afterExpense)}</b><small>Trừ giá vốn, kỹ thuật, phiếu chi và lương</small></div>
+    <div class="report-card view-cost">Doanh thu sau hoa hồng<b>${money(revenueMetrics.afterCommission)}</b><small>Trừ hoa hồng Sale của đơn đã thu đủ</small></div>
+    <div class="report-card view-cost">Doanh thu sau chi phí + hoa hồng<b>${money(revenueMetrics.afterExpenseCommission)}</b><small>= Tổng doanh thu - chi phí - hoa hồng</small></div>
     <div class="report-card">Đơn ghi nhận / Sản phẩm<b>${sales.length} đơn / ${qty} SP</b></div>
     <div class="report-card">Lũy kế đã thu của đơn ghi nhận<b>${money(paid)}</b></div>
     <div class="report-card">Còn nợ<b>${money(debt)}</b></div>
-    <div class="report-card">Cọc chưa lắp không tính doanh thu<b>${money(pendingDepositCollected)}</b><small>${pendingDepositSales.length} đơn phát sinh tiền trong kỳ</small></div>
+    <div class="report-card">Khoản thu chưa làm phiếu đủ 100%<b>${money(pendingDepositCollected)}</b><small>${pendingDepositSales.length} đơn chưa được tính doanh thu</small></div>
     <div class="report-card view-cost">Giá vốn<b>${money(totalCost)}</b></div>
     <div class="report-card view-cost">Lãi gộp<b>${money(grossMargin)}</b></div>
     <div class="report-card view-cost">Lợi nhuận đơn hàng<b>${money(grossProfit)}</b></div>
@@ -4091,7 +4121,12 @@ function renderReports(){
     <div class="report-card view-cost">Lợi nhuận ròng<b>${money(profit)}</b></div>
     <div class="report-card">Tổng phụ thu<b>${money(surchargeTotal)}</b></div><div class="report-card view-cost">Hoa hồng đã ghi nhận<b>${money(comm)}</b><small>Theo ngày thu đủ 100%</small></div>`;
   if($('reportProfitBreakdownTable'))$('reportProfitBreakdownTable').innerHTML=[
-    ['Doanh thu ghi nhận', rev, 'Chỉ đơn đã lắp và thu đủ 100%; ghi nhận tại ngày điều kiện sau cùng hoàn tất'],
+    ['Tổng doanh thu', rev, 'Chỉ phiếu bán đã thu đủ 100%; ghi nhận tại ngày khoản thu làm phiếu đạt đủ'],
+    ['Tổng chi phí chưa gồm hoa hồng', -revenueMetrics.expense, 'Giá vốn + công/xăng kỹ thuật + phiếu chi + lương'],
+    ['Doanh thu sau chi phí', revenueMetrics.afterExpense, 'Tổng doanh thu - tổng chi phí chưa gồm hoa hồng'],
+    ['Tổng hoa hồng Sale', -revenueMetrics.commission, 'Chỉ hoa hồng của các phiếu đã thu đủ 100% trong kỳ'],
+    ['Doanh thu sau hoa hồng', revenueMetrics.afterCommission, 'Tổng doanh thu - hoa hồng Sale'],
+    ['Doanh thu sau chi phí + hoa hồng', revenueMetrics.afterExpenseCommission, 'Tổng doanh thu - tổng chi phí chưa gồm hoa hồng - hoa hồng Sale'],
     ['Doanh số trước VAT', revenueBeforeVat, 'Cơ sở tính lợi nhuận và hoa hồng'],
     ['Giá vốn sản phẩm', -totalCost, 'Lấy từ Bảng giá vốn hiệu lực, nếu không có thì lấy Giá vốn trong Sản phẩm'],
     ['Lãi gộp', grossMargin, 'Doanh số trước VAT - Giá vốn'],
@@ -4128,7 +4163,7 @@ function renderReports(){
   if($('reportRevenueTable'))$('reportRevenueTable').innerHTML=Object.values(byTime).sort((a,b)=>String(b.key).localeCompare(String(a.key))).map(x=>`<tr><td><b>${x.key}</b></td><td>${x.orders}</td><td>${x.qty}</td><td>${money(x.revenue)}</td><td>${money(x.surcharge)}</td><td>${money(x.paid)}</td><td>${money(x.debt)}</td><td class="view-cost">${money(x.comm)}</td><td class="view-cost">${money(x.tech)}</td><td class="view-cost">${money(x.profit)}</td></tr>`).join('')||'<tr><td colspan="10">Chưa có doanh thu đủ điều kiện trong kỳ</td></tr>';
   const timeAsc=Object.values(byTime).sort((a,b)=>String(a.key).localeCompare(String(b.key)));
   renderChartHtml('reportRevenueCharts',
-    modernLineChart('Xu hướng doanh thu ghi nhận',timeAsc.map(x=>({label:x.key,value:x.revenue})),{sub:'Theo ngày đã lắp và thu đủ 100%',money:true,badge:money(rev)})+
+    modernLineChart('Xu hướng doanh thu ghi nhận',timeAsc.map(x=>({label:x.key,value:x.revenue})),{sub:'Theo ngày phiếu đạt đủ 100%',money:true,badge:money(rev)})+
     modernBarChart('Top model bán chạy',productRows.map(x=>({label:x.code,value:x.qty})),{sub:'Số lượng bán ra theo model',limit:8})+
     modernBarChart('Doanh thu theo model',productRows.map(x=>({label:x.code,value:x.revenue})),{sub:'Top model tạo doanh thu đã ghi nhận',money:true,limit:8})
   );
@@ -4332,6 +4367,21 @@ function exportRows(type){let rows=[];
   if(type==='stockbook'){const df=stockBookDateFilter();rows=stockBookRows(df.from,df.to).filter(r=>!df.active||r.periodMovement).map(r=>({tuNgay:df.from||'',denNgay:df.to||'',model:r.code,sanPham:r.name,nhap:r.totalIn,xuat:r.totalOut,chuyenKho:r.totalTransfer,dieuChinh:r.totalAdj,khoChinh:canAccessWarehouse('Kho Chính')?r.khoChinh:'Ẩn',khoVanPhong:canAccessWarehouse('Kho Văn Phòng')?r.khoVanPhong:'Ẩn',tongTonHienTai:r.stock,giaVon:has('viewCost')?r.cost:'Ẩn',giaTriTon:has('viewCost')?r.value:'Ẩn'}));}
   return rows;
 }
+function revenueSummaryExportRows(){
+  const range=reportRange();
+  const sales=revenueRecognizedSalesInRange(range.from,range.to);
+  const expenses=data.expenses.filter(e=>inReportRange(e.date,range.from,range.to)&&!isSalaryCategory(e.category));
+  const salaries=data.salaries.filter(e=>inReportRange(e.date,range.from,range.to));
+  const m=revenueDeductionMetrics(sales,expenses,salaries);
+  return [{
+    'Từ ngày':range.from,'Đến ngày':range.to,'Số phiếu đã thu đủ 100%':sales.length,
+    'Tổng doanh thu':m.revenue,'Tổng chi phí chưa gồm hoa hồng':m.expense,
+    'Tổng hoa hồng Sale':m.commission,'Doanh thu sau chi phí':m.afterExpense,
+    'Doanh thu sau hoa hồng':m.afterCommission,
+    'Doanh thu sau chi phí + hoa hồng':m.afterExpenseCommission,
+    'Công thức chi phí':'Giá vốn + công/xăng kỹ thuật + phiếu chi + lương'
+  }];
+}
 function stockQtyByType(code,type){let q=0;activeStockVouchers().forEach(v=>{if(v.type!==type)return;(v.items||[]).forEach(it=>{if(it.code===code)q+=+it.qty||0})});return q}
 function makeWorkbook(sheets){assertExcel();const wb=XLSX.utils.book_new();Object.entries(sheets).forEach(([name,rows])=>{const ws=XLSX.utils.json_to_sheet(rows.length?rows:[{}]);XLSX.utils.book_append_sheet(wb,ws,name.slice(0,31));});return wb;}
 
@@ -4391,7 +4441,20 @@ window.exportCommissionByStaff=()=>{try{
   renderCommissions();
 }catch(err){alert(err.message)}};
 
-window.exportExcel=(type)=>{try{if(['commissions','techPerformance','employeeIncome'].includes(type)){const ownStaff=canViewAllCommissions()?'':(currentStaffMatchIds()[0]||'__NO_STAFF__');if($('reports')?.classList.contains('active')){const range=reportRange();commissionAppliedFilter={q:reportSearchQ(),dept:type==='techPerformance'?'Kỹ thuật':'',staffId:ownStaff,from:range.from,to:range.to};}else commissionAppliedFilter=readCommissionFilterFromForm();}const schema=excelSchemas[type]||{sheet:type};const rows=exportRows(type);const wb=makeWorkbook({[schema.sheet||type]:rows.length?rows:(schema.sample||[])});XLSX.writeFile(wb,`${type}_${today()}.xlsx`);}catch(err){alert(err.message)}};
+window.exportExcel=(type)=>{try{
+  if(['commissions','techPerformance','employeeIncome'].includes(type)){
+    const ownStaff=canViewAllCommissions()?'':(currentStaffMatchIds()[0]||'__NO_STAFF__');
+    if($('reports')?.classList.contains('active')){const range=reportRange();commissionAppliedFilter={q:reportSearchQ(),dept:type==='techPerformance'?'Kỹ thuật':'',staffId:ownStaff,from:range.from,to:range.to};}
+    else commissionAppliedFilter=readCommissionFilterFromForm();
+  }
+  const schema=excelSchemas[type]||{sheet:type};
+  const rows=exportRows(type);
+  const sheets=type==='revenueReport'
+    ? {'Tong_hop_doanh_thu':revenueSummaryExportRows(),'Chi_tiet_doanh_thu':rows.length?rows:(schema.sample||[])}
+    : {[schema.sheet||type]:rows.length?rows:(schema.sample||[])};
+  const wb=makeWorkbook(sheets);
+  XLSX.writeFile(wb,`${type}_${today()}.xlsx`);
+}catch(err){alert(err.message)}};
 window.downloadTemplateExcel=(type)=>{try{const schema=excelSchemas[type];if(!schema)return alert('Chưa có mẫu Excel cho mục này');const sample=schema.sample?.length?schema.sample:[Object.fromEntries(schema.headers.map(h=>[h,'']))];const wb=makeWorkbook({[schema.sheet]:sample});XLSX.writeFile(wb,`mau_import_${type}.xlsx`);}catch(err){alert(err.message)}};
 window.exportAllExcel=()=>{try{const oldFilter=commissionAppliedFilter;commissionAppliedFilter={q:'',dept:'',staffId:canViewAllCommissions()?'':(currentStaffMatchIds()[0]||'__NO_STAFF__'),from:'',to:''};const sheets={};['customers','products','prices','staff','sales','stockVouchers','expenses','salaries','warranties','commissions','stockbook','returns','logs'].forEach(t=>{sheets[excelSchemas[t]?.sheet||t]=exportRows(t)});commissionAppliedFilter=oldFilter;const wb=makeWorkbook(sheets);XLSX.writeFile(wb,`Similock_Da_Nang_Toan_bo_${today()}.xlsx`);}catch(err){alert(err.message)}};
 function rowsFromCsvText(text){const rows=parseCSV(text);if(rows.length<2)return[];const heads=rows.shift().map(x=>x.trim());return rows.map(r=>{let o={};heads.forEach((h,i)=>o[h]=r[i]??'');return o})}

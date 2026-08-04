@@ -48,7 +48,7 @@ const depositPending={id:'S1',date:'2026-07-05',installStatus:'Chưa lắp',full
 assert.equal(ctx.saleRevenueRecognitionDate(depositPending),'','Đơn cọc chưa lắp không được ghi nhận doanh thu');
 
 const fullButNotInstalled={id:'S2',date:'2026-07-05',installStatus:'Chưa lắp',fullyPaid:true,fullyPaidAt:'2026-07-08',grand:3000000};
-assert.equal(ctx.saleRevenueRecognitionDate(fullButNotInstalled),'','Thu đủ nhưng chưa lắp vẫn chưa được ghi nhận doanh thu');
+assert.equal(ctx.saleRevenueRecognitionDate(fullButNotInstalled),'2026-07-08','Thu đủ 100% phải ghi nhận theo ngày thu đủ, không phụ thuộc lắp đặt');
 
 const installedButPartial={id:'S3',date:'2026-07-05',installStatus:'Đã lắp',installCompletedDate:'2026-07-12',fullyPaid:false,grand:3000000};
 assert.equal(ctx.saleRevenueRecognitionDate(installedButPartial),'','Đã lắp nhưng chưa thu đủ vẫn chưa được ghi nhận doanh thu');
@@ -57,11 +57,11 @@ const paidAfterInstall={id:'S4',date:'2026-06-25',installStatus:'Đã lắp',ins
 assert.equal(ctx.saleRevenueRecognitionDate(paidAfterInstall),'2026-07-18','Phải ghi nhận vào ngày thu đủ nếu thu đủ sau ngày lắp');
 
 const installedAfterPaid={id:'S5',date:'2026-06-25',installStatus:'Đã lắp',installCompletedDate:'2026-07-20',fullyPaid:true,fullyPaidAt:'2026-06-28',grand:3000000};
-assert.equal(ctx.saleRevenueRecognitionDate(installedAfterPaid),'2026-07-20','Phải ghi nhận vào ngày lắp nếu lắp sau ngày thu đủ');
+assert.equal(ctx.saleRevenueRecognitionDate(installedAfterPaid),'2026-06-28','Ngày lắp sau đó không được đẩy doanh thu sang kỳ khác');
 
 ctx.data.sales=[depositPending,fullButNotInstalled,installedButPartial,paidAfterInstall,installedAfterPaid];
-assert.deepEqual(Array.from(ctx.revenueRecognizedSalesInRange('2026-06-01','2026-06-30')).map(x=>x.id),[],'Tháng 6 không được nhận đơn chỉ mới cọc hoặc chưa lắp');
-assert.deepEqual(Array.from(ctx.revenueRecognizedSalesInRange('2026-07-01','2026-07-31')).map(x=>x.id),['S4','S5'],'Tháng 7 chỉ nhận đơn hoàn tất cả lắp đặt và thu đủ');
+assert.deepEqual(Array.from(ctx.revenueRecognizedSalesInRange('2026-06-01','2026-06-30')).map(x=>x.id),['S5'],'Tháng 6 nhận đúng đơn đã thu đủ trong tháng');
+assert.deepEqual(Array.from(ctx.revenueRecognizedSalesInRange('2026-07-01','2026-07-31')).map(x=>x.id),['S2','S4'],'Tháng 7 nhận đúng các đơn đạt đủ 100% trong tháng');
 
 assert(src.includes("const sales=revenueRecognizedSalesInRange(from,to)"),'Báo cáo phải dùng doanh thu đã ghi nhận thay vì ngày bán');
 assert(src.includes("const salesInRange=revenueRecognizedSalesInRange(range.from,range.to)"),'Dashboard phải dùng doanh thu đã ghi nhận');
